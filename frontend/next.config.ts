@@ -1,10 +1,12 @@
-import { NextConfig } from 'next'
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',                  // enable static HTML export
-  basePath: '/MealFinder',           // your repo name
-  assetPrefix: '/MealFinder/',       // ensures _next assets load
-  images: { unoptimized: true },     // disable image optimization
-}
+  output: "export",                  // static HTML export
+  basePath: "/MealFinder",           // repo name
+  assetPrefix: "/MealFinder/",       // ensures assets load correctly
+  images: {
+    unoptimized: true,               // disable image optimization
+  },
+};
 
-export default nextConfig
+export default nextConfig;
