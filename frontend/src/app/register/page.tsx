@@ -3,6 +3,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 
@@ -51,11 +53,12 @@ export default function RegisterPage() {
         inventory: []
       };
 
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUser),
       });
+
 
       const data: AuthResponse = await res.json();
       
@@ -150,12 +153,11 @@ export default function RegisterPage() {
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Already have an account?{" "}
-            <a
+            <Link
               href="/login"
-              className="text-blue-400 hover:text-blue-300 underline"
-            >
+              className="text-blue-400 hover:text-blue-300 underline">
               Login here
-            </a>
+            </Link>
           </p>
         </div>
       </div>

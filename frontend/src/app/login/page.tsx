@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface LoginRequest {
   username: string;
@@ -30,11 +31,12 @@ export default function LoginPage() {
       const loginRequest: LoginRequest = { username, password };
       
       // Replace this URL with your deployed backend later
-      const res = await fetch(`/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginRequest),
-      });
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(loginRequest),
+});
+
 
       if (!res.ok) {
         throw new Error("Login failed");
@@ -117,12 +119,9 @@ export default function LoginPage() {
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Don&apos;t have an account?{" "}
-            <a
-              href="/register"
-              className="text-blue-400 hover:text-blue-300 underline"
-            >
+            <Link href="/register" className="text-blue-400 hover:text-blue-300 underline">
               Register here
-            </a>
+            </Link>
           </p>
         </div>
       </div>
