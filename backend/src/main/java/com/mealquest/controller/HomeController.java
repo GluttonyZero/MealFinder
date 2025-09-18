@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class HomeController {
     @GetMapping("/")
     public String home() {
-        return "✅ MealQuest Backend is running on port 8080!";
+        return "✅ MealQuest Backend is running!";
     }
 }

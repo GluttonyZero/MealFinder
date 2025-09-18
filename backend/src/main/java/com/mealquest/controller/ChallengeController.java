@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/challenge")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder")
 public class ChallengeController {
 
     @Autowired

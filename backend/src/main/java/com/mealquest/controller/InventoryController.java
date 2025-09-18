@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users/{userId}/inventory")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder")
 public class InventoryController {
 
     @Autowired
