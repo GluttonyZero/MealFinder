@@ -36,24 +36,28 @@ export default function LoginPage() {
 
     try {
       const loginRequest: LoginRequest = { username, password };
-      const res = await fetch(`${backendUrl}/api/auth/login`, {
+      const res = await fetch(`${backendUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginRequest),
       });
 
-      if (!res.ok) throw new Error("Login failed");
+      if (!res.ok) {
+        const text = await res.text(); // log server error
+        console.error("Server response:", text);
+        throw new Error("Login failed");
+      }
 
       const data: AuthResponse = await res.json();
       if (data.status === "SUCCESS" && data.userId) {
         localStorage.setItem("mealquest_userId", data.userId.toString());
-        router.push("/MealFinder/home");
+        router.push("/MealFinder/home"); // include base path
       } else {
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
       console.error(err);
-      setError("Login failed. Please check credentials or backend.");
+      setError("Login failed. Check credentials or backend.");
     } finally {
       setLoading(false);
     }
