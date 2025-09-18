@@ -3,7 +3,6 @@
 
 import React, { useState } from "react";
 import { User } from "../types/user";
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Props {
@@ -27,18 +26,18 @@ export default function ChallengeOptions({ user }: Props) {
     setLoading(true);
     setError("");
     setMealResult(null);
-
+    
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        throw new Error(`Failed to fetch meals: ${res.status}`);
+        throw new Error("Failed to fetch meals");
       }
-
+      
       const data = await res.json();
-
+      
       if (data.meals && Array.isArray(data.meals)) {
         setMealResult(data.meals);
-      } else if (typeof data === "string") {
+      } else if (typeof data === 'string') {
         setError(data);
       } else {
         setError("No meals found. Try different ingredients!");
@@ -64,9 +63,7 @@ export default function ChallengeOptions({ user }: Props) {
       setError("Please enter a cuisine type (e.g., Italian, Mexican)");
       return;
     }
-    await fetchMeals(
-      `${API_BASE_URL}/api/challenge/by-area?area=${encodeURIComponent(area)}`
-    );
+    await fetchMeals(`${API_BASE_URL}/api/challenge/by-area?area=${encodeURIComponent(area)}`);
   };
 
   const option4 = async () => {
@@ -79,12 +76,7 @@ export default function ChallengeOptions({ user }: Props) {
       const data = await res.json();
       if (data.meals && data.meals[0]) {
         const meal = data.meals[0];
-        alert(
-          `Recipe: ${meal.strMeal}\n\nInstructions: ${meal.strInstructions?.substring(
-            0,
-            500
-          )}...`
-        );
+        alert(`Recipe: ${meal.strMeal}\n\nInstructions: ${meal.strInstructions?.substring(0, 200)}...`);
       }
     } catch (err) {
       console.error("Failed to fetch recipe details:", err);
@@ -94,7 +86,7 @@ export default function ChallengeOptions({ user }: Props) {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Meal Challenges</h2>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <button
           onClick={option1}
@@ -103,7 +95,7 @@ export default function ChallengeOptions({ user }: Props) {
         >
           🏠 From My Inventory
         </button>
-
+        
         <button
           onClick={option2}
           disabled={loading}
@@ -111,12 +103,12 @@ export default function ChallengeOptions({ user }: Props) {
         >
           🎲 Surprise Me
         </button>
-
+        
         <div className="md:col-span-2">
           <div className="flex gap-2">
             <input
               value={area}
-              onChange={(e) => setArea(e.target.value)}
+              onChange={e => setArea(e.target.value)}
               placeholder="Enter cuisine (e.g., Italian, Mexican)"
               className="flex-1 p-3 border border-gray-600 rounded bg-gray-700 text-white"
               disabled={loading}
@@ -130,7 +122,7 @@ export default function ChallengeOptions({ user }: Props) {
             </button>
           </div>
         </div>
-
+        
         <button
           onClick={option4}
           disabled={loading}
@@ -141,12 +133,14 @@ export default function ChallengeOptions({ user }: Props) {
       </div>
 
       {error && (
-        <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>
+        <div className="bg-red-500 text-white p-3 rounded mb-4">
+          {error}
+        </div>
       )}
 
       <div>
         <h3 className="text-xl font-semibold mb-4">Suggested Meals</h3>
-
+        
         {loading && (
           <div className="text-center py-8">
             <div className="loading-spinner mx-auto mb-4"></div>
