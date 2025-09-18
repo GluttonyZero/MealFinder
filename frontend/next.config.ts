@@ -3,7 +3,8 @@ import { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   output: 'export',                  // enable static HTML export
   basePath: '/MealFinder',           // your repo name
-  images: { unoptimized: true },     // disables next/image optimization
+  assetPrefix: '/MealFinder/',       // ensures _next assets load
+  images: { unoptimized: true },     // disable image optimization
 }
 
 export default nextConfig
