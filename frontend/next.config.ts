@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",                  // static HTML export
-  basePath: "/MealFinder",           // repo name
-  assetPrefix: "/MealFinder/",       // ensures assets load correctly
-  images: {
-    unoptimized: true,               // disable image optimization
-  },
+  output: "export",                     // Static export
+  basePath: "/MealFinder",              // Repo name
+  assetPrefix: "/MealFinder/",          // Ensures CSS/JS load from correct path
+  images: { unoptimized: true },        // Fix for GitHub Pages
 };
 
 export default nextConfig;
