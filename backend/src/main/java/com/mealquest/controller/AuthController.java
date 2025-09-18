@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
-@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder")
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = {"https://gluttonyzero.github.io/MealFinder", "http://localhost:3000"})
 public class AuthController {
 
     @Autowired
