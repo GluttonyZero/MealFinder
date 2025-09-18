@@ -13,7 +13,10 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://gluttonyzero.github.io/MealFinder")
+                        .allowedOrigins(
+                            "http://localhost:3000",      // for local dev
+                            "https://gluttonyzero.github.io" // for GitHub Pages
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
