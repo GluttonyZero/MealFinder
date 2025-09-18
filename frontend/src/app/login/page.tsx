@@ -27,32 +27,36 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!backendUrl) {
+      setError("Backend URL not configured.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const loginRequest: LoginRequest = { username, password };
-      
-      // Replace this URL with your deployed backend later
-     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(loginRequest),
-    });
-
+      const res = await fetch(`${backendUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginRequest),
+      });
 
       if (!res.ok) {
         throw new Error("Login failed");
       }
 
       const data: AuthResponse = await res.json();
-      
+
       if (data.status === "SUCCESS" && data.userId) {
         localStorage.setItem("mealquest_userId", data.userId.toString());
-        router.push("/home");
+        router.push("/MealFinder/home"); // ensure basePath is included
       } else {
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
-      setError("Login failed. Please check your credentials.");
       console.error(err);
+      setError("Login failed. Please check your credentials or backend URL.");
     } finally {
       setLoading(false);
     }
@@ -62,18 +66,16 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-900">
       <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-96">
         <h1 className="text-3xl font-bold mb-6 text-center text-white">MealQuest Login</h1>
-        
+
         {error && (
           <div className="bg-red-500 text-white p-3 rounded mb-4">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Username
-            </label>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Username</label>
             <input
               type="text"
               value={username}
@@ -84,11 +86,9 @@ export default function LoginPage() {
               disabled={loading}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Password
-            </label>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
             <input
               type="password"
               value={password}
@@ -99,7 +99,7 @@ export default function LoginPage() {
               disabled={loading}
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
@@ -115,11 +115,11 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-blue-400 hover:text-blue-300 underline">
+            <Link href="/MealFinder/register" className="text-blue-400 hover:text-blue-300 underline">
               Register here
             </Link>
           </p>

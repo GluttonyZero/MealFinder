@@ -1,4 +1,3 @@
-// app/register/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -6,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
 interface User {
   username: string;
@@ -31,7 +29,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username || !email || !password) {
       setError("All fields are required");
       return;
@@ -45,6 +43,12 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
 
+    if (!API_BASE_URL) {
+      setError("Backend URL not configured.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const newUser: User = {
         username,
@@ -53,24 +57,27 @@ export default function RegisterPage() {
         inventory: []
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
       });
 
+      if (!res.ok) {
+        throw new Error("Registration failed");
+      }
 
       const data: AuthResponse = await res.json();
-      
+
       if (data.status === "SUCCESS" && data.userId) {
         localStorage.setItem("mealquest_userId", data.userId.toString());
-        router.push("/home");
+        router.push("/MealFinder/home"); // include repo basePath
       } else {
         setError(data.message || "Registration failed");
       }
     } catch (err) {
-      setError("Registration failed. Please try again.");
       console.error(err);
+      setError("Registration failed. Please check backend or network.");
     } finally {
       setLoading(false);
     }
@@ -80,18 +87,14 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-900">
       <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-96">
         <h1 className="text-3xl font-bold mb-6 text-center text-white">Create Account</h1>
-        
+
         {error && (
-          <div className="bg-red-500 text-white p-3 rounded mb-4">
-            {error}
-          </div>
+          <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>
         )}
-        
+
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Username
-            </label>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Username</label>
             <input
               type="text"
               value={username}
@@ -102,11 +105,9 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Email
-            </label>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Email</label>
             <input
               type="email"
               value={email}
@@ -117,11 +118,9 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Password
-            </label>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
             <input
               type="password"
               value={password}
@@ -133,7 +132,7 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
@@ -149,13 +148,11 @@ export default function RegisterPage() {
             )}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="text-blue-400 hover:text-blue-300 underline">
+            <Link href="/MealFinder/login" className="text-blue-400 hover:text-blue-300 underline">
               Login here
             </Link>
           </p>

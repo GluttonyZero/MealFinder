@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import Inventory from "../components/Inventory";
 import ChallengeOptions from "../components/ChallengeOptions";
 import { User } from "../types/user";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -18,13 +18,20 @@ export default function HomePage() {
   useEffect(() => {
     const userId = localStorage.getItem("mealquest_userId");
     if (!userId) {
-      router.push("/login");
+      router.push("/MealFinder/login"); // include basePath
       return;
     }
     fetchUser(userId);
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchUser = async (userId: string) => {
+    if (!API_BASE_URL) {
+      setError("Backend URL not configured");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${userId}`);
       if (res.ok) {
@@ -32,11 +39,11 @@ export default function HomePage() {
         setUser(userData);
       } else {
         setError("Failed to load user data");
-        router.push("/login");
+        router.push("/MealFinder/login");
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
-      console.error("Failed to fetch user:", error);
+    } catch (err) {
+      console.error("Failed to fetch user:", err);
+      setError("Network error. Please check your backend URL.");
     } finally {
       setLoading(false);
     }
@@ -44,7 +51,7 @@ export default function HomePage() {
 
   const handleLogout = () => {
     localStorage.removeItem("mealquest_userId");
-    router.push("/login");
+    router.push("/MealFinder/login");
   };
 
   const refreshUser = async () => {

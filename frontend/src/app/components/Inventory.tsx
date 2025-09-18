@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from "react";
 import { User } from "../types/user";
 import InventorySearch from "./InventorySearch";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Props {
   user: User;
@@ -18,20 +18,23 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchInventory();
+    if (user?.id) fetchInventory();
   }, [user]);
 
   const fetchInventory = async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
-      if (res.ok) {
-        const data = await res.json();
-        setInventory(Array.isArray(data) ? data : []);
-      }
+      if (!res.ok) throw new Error(`Failed to fetch inventory: ${res.status}`);
+      const data = await res.json();
+      setInventory(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError("Failed to load inventory");
-      console.error("Failed to load inventory:", err);
+      setError("Failed to load inventory.");
+      console.error(err);
       setInventory([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,20 +47,16 @@ export default function Inventory({ user, onInventoryChange }: Props) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(ingredient),
+          body: JSON.stringify({ ingredient }), // wrap in object for backend
         }
       );
-      
-      if (res.ok) {
-        const updated = await res.json();
-        setInventory(Array.isArray(updated) ? updated : []);
-        onInventoryChange?.();
-      } else {
-        setError("Failed to add ingredient");
-      }
+      if (!res.ok) throw new Error(`Failed to add ingredient: ${res.status}`);
+      const updated = await res.json();
+      setInventory(Array.isArray(updated) ? updated : []);
+      onInventoryChange?.();
     } catch (err) {
       setError("Network error. Please try again.");
-      console.error("Failed to add ingredient:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -72,20 +71,16 @@ export default function Inventory({ user, onInventoryChange }: Props) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(ingredient),
+          body: JSON.stringify({ ingredient }),
         }
       );
-      
-      if (res.ok) {
-        const updated = await res.json();
-        setInventory(Array.isArray(updated) ? updated : []);
-        onInventoryChange?.();
-      } else {
-        setError("Failed to remove ingredient");
-      }
+      if (!res.ok) throw new Error(`Failed to remove ingredient: ${res.status}`);
+      const updated = await res.json();
+      setInventory(Array.isArray(updated) ? updated : []);
+      onInventoryChange?.();
     } catch (err) {
       setError("Network error. Please try again.");
-      console.error("Failed to remove ingredient:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -94,18 +89,18 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Your Inventory</h2>
-      
+
       {error && (
-        <div className="bg-red-500 text-white p-3 rounded mb-4">
-          {error}
-        </div>
+        <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>
       )}
 
       <InventorySearch onAddIngredient={addIngredient} disabled={loading} />
 
       <div className="mt-4">
-        <h3 className="text-lg font-semibold mb-3">Current Ingredients ({inventory.length})</h3>
-        
+        <h3 className="text-lg font-semibold mb-3">
+          Current Ingredients ({inventory.length})
+        </h3>
+
         {inventory.length === 0 ? (
           <div className="text-gray-400 p-4 text-center bg-gray-700 rounded">
             No ingredients in your inventory yet. Search above to add some!
