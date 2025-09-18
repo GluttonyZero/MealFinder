@@ -1,4 +1,3 @@
-// app/home/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -18,12 +17,11 @@ export default function HomePage() {
   useEffect(() => {
     const userId = localStorage.getItem("mealquest_userId");
     if (!userId) {
-      router.push("/MealFinder/login"); // include basePath
+      router.push("/MealFinder/login");
       return;
     }
     fetchUser(userId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
   const fetchUser = async (userId: string) => {
     if (!API_BASE_URL) {
@@ -34,16 +32,15 @@ export default function HomePage() {
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${userId}`);
-      if (res.ok) {
-        const userData: User = await res.json();
-        setUser(userData);
-      } else {
-        setError("Failed to load user data");
-        router.push("/MealFinder/login");
+      if (!res.ok) {
+        throw new Error("Failed to fetch user");
       }
+      const userData: User = await res.json();
+      setUser(userData);
     } catch (err) {
-      console.error("Failed to fetch user:", err);
-      setError("Network error. Please check your backend URL.");
+      console.error(err);
+      setError("Failed to load user data");
+      router.push("/MealFinder/login");
     } finally {
       setLoading(false);
     }
@@ -55,8 +52,7 @@ export default function HomePage() {
   };
 
   const refreshUser = async () => {
-    if (!user) return;
-    await fetchUser(user.id!.toString());
+    if (user?.id) await fetchUser(user.id.toString());
   };
 
   if (loading) {
@@ -93,9 +89,7 @@ export default function HomePage() {
         </div>
 
         {error && (
-          <div className="bg-red-500 text-white p-3 rounded mb-4">
-            {error}
-          </div>
+          <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>
         )}
 
         {/* Main Content */}

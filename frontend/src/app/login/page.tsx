@@ -42,21 +42,18 @@ export default function LoginPage() {
         body: JSON.stringify(loginRequest),
       });
 
-      if (!res.ok) {
-        throw new Error("Login failed");
-      }
+      if (!res.ok) throw new Error("Login failed");
 
       const data: AuthResponse = await res.json();
-
       if (data.status === "SUCCESS" && data.userId) {
         localStorage.setItem("mealquest_userId", data.userId.toString());
-        router.push("/MealFinder/home"); // ensure basePath is included
+        router.push("/MealFinder/home");
       } else {
         setError(data.message || "Invalid credentials");
       }
     } catch (err) {
       console.error(err);
-      setError("Login failed. Please check your credentials or backend URL.");
+      setError("Login failed. Please check credentials or backend.");
     } finally {
       setLoading(false);
     }
@@ -65,13 +62,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-900">
       <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-96">
-        <h1 className="text-3xl font-bold mb-6 text-center text-white">MealQuest Login</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-white">
+          MealQuest Login
+        </h1>
 
-        {error && (
-          <div className="bg-red-500 text-white p-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -105,14 +100,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="loading-spinner mr-2"></div>
-                Logging in...
-              </div>
-            ) : (
-              "Login"
-            )}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
