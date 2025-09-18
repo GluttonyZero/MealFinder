@@ -9,7 +9,7 @@ export default function InventoryPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetch(`http://${API_BASE_URL}/api/users/1`)
+    fetch(`${API_BASE_URL}/api/users/1`)
       .then((res) => res.json())
       .then((data) => setUser(data));
   }, []);

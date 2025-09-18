@@ -23,7 +23,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
 
   const fetchInventory = async () => {
     try {
-      const res = await fetch(`http://${API_BASE_URL}/api/users/${user.id}/inventory`);
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
       if (res.ok) {
         const data = await res.json();
         setInventory(Array.isArray(data) ? data : []);
@@ -40,7 +40,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     setError("");
     try {
       const res = await fetch(
-        `http://${API_BASE_URL}/api/users/${user.id}/inventory/add`,
+        `${API_BASE_URL}/api/users/${user.id}/inventory/add`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -68,7 +68,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     setError("");
     try {
       const res = await fetch(
-        `http://${API_BASE_URL}/api/users/${user.id}/inventory/remove`,
+        `${API_BASE_URL}/api/users/${user.id}/inventory/remove`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

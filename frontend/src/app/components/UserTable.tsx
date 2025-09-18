@@ -11,7 +11,7 @@ interface Props {
 
 const UserTable: React.FC<Props> = ({ users, setSelectedUser, refreshUsers }) => {
   const deleteUser = async (id: number) => {
-    await fetch(`http://${API_BASE_URL}/api/users/${id}`, { method: "DELETE" });
+    await fetch(`${API_BASE_URL}/api/users/${id}`, { method: "DELETE" });
     refreshUsers();
   };
 

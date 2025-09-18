@@ -26,7 +26,7 @@ export default function HomePage() {
 
   const fetchUser = async (userId: string) => {
     try {
-      const res = await fetch(`http://${API_BASE_URL}/api/users/${userId}`);
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`);
       if (res.ok) {
         const userData: User = await res.json();
         setUser(userData);

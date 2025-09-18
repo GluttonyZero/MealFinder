@@ -51,11 +51,11 @@ export default function ChallengeOptions({ user }: Props) {
   };
 
   const option1 = async () => {
-    await fetchMeals(`http://${API_BASE_URL}/api/challenge/from-inventory/${user.id}`);
+    await fetchMeals(`${API_BASE_URL}/api/challenge/from-inventory/${user.id}`);
   };
 
   const option2 = async () => {
-    await fetchMeals(`http://${API_BASE_URL}/api/challenge/random`);
+    await fetchMeals(`${API_BASE_URL}/api/challenge/random`);
   };
 
   const option3 = async () => {
@@ -63,16 +63,16 @@ export default function ChallengeOptions({ user }: Props) {
       setError("Please enter a cuisine type (e.g., Italian, Mexican)");
       return;
     }
-    await fetchMeals(`http://${API_BASE_URL}/api/challenge/by-area?area=${encodeURIComponent(area)}`);
+    await fetchMeals(`${API_BASE_URL}/api/challenge/by-area?area=${encodeURIComponent(area)}`);
   };
 
   const option4 = async () => {
-    await fetchMeals(`http://${API_BASE_URL}/api/challenge/budget`);
+    await fetchMeals(`${API_BASE_URL}/api/challenge/budget`);
   };
 
   const viewRecipeDetails = async (mealId: string) => {
     try {
-      const res = await fetch(`http://${API_BASE_URL}/api/challenge/lookup/${mealId}`);
+      const res = await fetch(`${API_BASE_URL}/api/challenge/lookup/${mealId}`);
       const data = await res.json();
       if (data.meals && data.meals[0]) {
         const meal = data.meals[0];
