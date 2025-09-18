@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     try {
       const loginRequest: LoginRequest = { username, password };
-      const res = await fetch(`${backendUrl}/auth/login`, {
+      const res = await fetch(`${backendUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginRequest),

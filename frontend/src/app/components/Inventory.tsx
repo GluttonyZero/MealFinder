@@ -40,7 +40,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     setError("");
     try {
       const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.id}/inventory/add`,
+        `S${API_BASE_URL}/api/users/${user.id}/inventory/add`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

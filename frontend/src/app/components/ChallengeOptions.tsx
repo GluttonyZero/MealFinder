@@ -72,7 +72,7 @@ export default function ChallengeOptions({ user }: Props) {
 
   const viewRecipeDetails = async (mealId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/challenge/lookup/${mealId}`);
+      const res = await fetch(`http://${API_BASE_URL}/api/challenge/lookup/${mealId}`);
       const data = await res.json();
       if (data.meals && data.meals[0]) {
         const meal = data.meals[0];
