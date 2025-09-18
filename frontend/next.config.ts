@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  output: 'export',                  // enable static HTML export
+  basePath: '/MealFinder',           // your repo name
+  images: { unoptimized: true },     // disables next/image optimization
+}
 
-export default nextConfig;
+export default nextConfig

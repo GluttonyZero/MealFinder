@@ -1,10 +1,7 @@
-// app/login/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
 interface LoginRequest {
   username: string;
@@ -32,7 +29,8 @@ export default function LoginPage() {
     try {
       const loginRequest: LoginRequest = { username, password };
       
-      const res = await fetch(`http://${API_BASE_URL}/auth/login`, {
+      // Replace this URL with your deployed backend later
+      const res = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginRequest),
@@ -118,7 +116,7 @@ export default function LoginPage() {
         
         <div className="mt-6 text-center">
           <p className="text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a
               href="/register"
               className="text-blue-400 hover:text-blue-300 underline"

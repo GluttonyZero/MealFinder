@@ -1,8 +1,5 @@
-// components/InventorySearch.tsx
 "use client";
 import React, { useState, useEffect } from "react";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
 interface InventorySearchProps {
   onAddIngredient: (ingredient: string) => void;
@@ -28,7 +25,7 @@ const InventorySearch: React.FC<InventorySearchProps> = ({
       const res = await fetch("https://www.themealdb.com/api/json/v1/1/list.php?i=list");
       const data = await res.json();
       if (data.meals) {
-        const list: string[] = data.meals.map((m: any) => m.strIngredient);
+        const list: string[] = data.meals.map((m: { strIngredient: string }) => m.strIngredient);
         setAllIngredients(list);
       }
     } catch (err) {
@@ -54,7 +51,7 @@ const InventorySearch: React.FC<InventorySearchProps> = ({
       <input
         type="text"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
         placeholder="Search for ingredients..."
         className="border border-gray-600 p-3 w-full rounded bg-gray-700 text-white placeholder-gray-400"
         disabled={disabled || loading}
