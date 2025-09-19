@@ -9,7 +9,6 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/challenge")
@@ -24,6 +23,7 @@ public class ChallengeController {
 
     private final String BASE_URL = "https://www.themealdb.com/api/json/v1/1/";
 
+    // 1) Based on user inventory
     @GetMapping("/from-inventory/{userId}")
     public Object fromInventory(@PathVariable Long userId) {
         User user = userRepository.findById(userId).orElse(null);
@@ -33,7 +33,8 @@ public class ChallengeController {
         if (inventory == null || inventory.isEmpty())
             return Map.of("status", "info", "message", "Inventory empty");
 
-        List<Map<String, Object>> allMeals = new ArrayList<>();
+        // Store all meals found from each inventory ingredient
+        Map<String, Map<String, Object>> allMealsMap = new HashMap<>();
 
         for (String ingredient : inventory) {
             try {
@@ -42,27 +43,23 @@ public class ChallengeController {
 
                 if (result != null && result.get("meals") != null) {
                     List<Map<String, Object>> meals = (List<Map<String, Object>>) result.get("meals");
-                    allMeals.addAll(meals);
+                    for (Map<String, Object> meal : meals) {
+                        String mealId = (String) meal.get("idMeal");
+                        allMealsMap.putIfAbsent(mealId, meal); // deduplicate
+                    }
                 }
             } catch (Exception e) {
                 continue;
             }
         }
 
-        if (allMeals.isEmpty())
+        if (allMealsMap.isEmpty())
             return Map.of("status", "info", "message", "No recipes found for any ingredients in your inventory");
 
-        // Deduplicate by idMeal
-        Map<String, Map<String, Object>> mealMap = new HashMap<>();
-        for (Map<String, Object> meal : allMeals) {
-            mealMap.put((String) meal.get("idMeal"), meal);
-        }
-
-        List<Map<String, Object>> uniqueMeals = new ArrayList<>(mealMap.values());
-
-        // Fetch full details for each meal to get ingredients
         List<Map<String, Object>> detailedMeals = new ArrayList<>();
-        for (Map<String, Object> meal : uniqueMeals) {
+
+        // Fetch full details for each meal
+        for (Map<String, Object> meal : allMealsMap.values()) {
             try {
                 String mealId = (String) meal.get("idMeal");
                 Map<String, Object> details = restTemplate.getForObject(BASE_URL + "lookup.php?i=" + mealId, Map.class);
@@ -74,8 +71,13 @@ public class ChallengeController {
                     for (int i = 1; i <= 20; i++) {
                         String key = "strIngredient" + i;
                         String ing = (String) fullMeal.get(key);
-                        if (ing != null && !ing.isEmpty() && inventory.stream().anyMatch(inv -> inv.equalsIgnoreCase(ing.trim()))) {
-                            matchCount++;
+                        if (ing != null && !ing.isEmpty()) {
+                            for (String inv : inventory) {
+                                if (ing.trim().equalsIgnoreCase(inv.trim())) {
+                                    matchCount++;
+                                    break; // prevent double-counting
+                                }
+                            }
                         }
                     }
                     fullMeal.put("matchCount", matchCount);
@@ -86,7 +88,7 @@ public class ChallengeController {
             }
         }
 
-        // Sort by number of ingredients matched (descending)
+        // Sort meals by number of inventory matches (descending)
         detailedMeals.sort((a, b) -> ((Integer) b.get("matchCount")).compareTo((Integer) a.get("matchCount")));
 
         return Map.of(
@@ -97,8 +99,6 @@ public class ChallengeController {
                 "note", "Recipes sorted by number of ingredients you already have (best matches first)"
         );
     }
-
-
 
     // 2) surprise me: random
     @GetMapping("/random")
@@ -134,7 +134,7 @@ public class ChallengeController {
         }
     }
 
-    // 4) budget: pick a few low-cost ingredients
+    // 4) budget
     @GetMapping("/budget")
     public Object budget(@RequestParam(required = false) List<String> lowCost) {
         try {
@@ -142,9 +142,6 @@ public class ChallengeController {
             List<String> chosen = (lowCost == null || lowCost.isEmpty()) ? defaults : lowCost;
 
             Random random = new Random();
-            int numberOfIngredients = Math.min(3, Math.max(1, random.nextInt(chosen.size()) + 1));
-
-            // Pick one random ingredient (since multi-ingredient is premium)
             String ingredient = chosen.get(random.nextInt(chosen.size()));
             String encodedIngredient = URLEncoder.encode(ingredient, StandardCharsets.UTF_8.toString());
 
@@ -154,9 +151,9 @@ public class ChallengeController {
             if (result != null && result.containsKey("meals") && result.get("meals") != null) {
                 List<?> meals = (List<?>) result.get("meals");
                 return Map.of(
-                    "status", "success",
-                    "ingredientUsed", ingredient,
-                    "meals", meals
+                        "status", "success",
+                        "ingredientUsed", ingredient,
+                        "meals", meals
                 );
             }
             return Map.of("status", "info", "message", "No budget recipes found");
@@ -216,10 +213,10 @@ public class ChallengeController {
             if (result != null && result.containsKey("meals") && result.get("meals") != null) {
                 List<?> meals = (List<?>) result.get("meals");
                 return Map.of(
-                    "status", "success",
-                    "ingredient", ingredient,
-                    "meals", meals,
-                    "count", meals.size()
+                        "status", "success",
+                        "ingredient", ingredient,
+                        "meals", meals,
+                        "count", meals.size()
                 );
             }
             return Map.of("status", "info", "message", "No recipes found for ingredient: " + ingredient);
