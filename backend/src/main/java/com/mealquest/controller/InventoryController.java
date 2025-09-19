@@ -24,7 +24,7 @@ public class InventoryController {
                 .map(user -> {
                     List<String> inv = user.getInventory();
                     if (inv == null) inv = new ArrayList<>();
-                    return ResponseEntity.ok(inv);
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(inv));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -46,7 +46,7 @@ public class InventoryController {
                         user.setInventory(inv);
                         userRepository.save(user);
                     }
-                    return ResponseEntity.ok(inv);
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(inv));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -66,8 +66,10 @@ public class InventoryController {
                         inv.removeIf(i -> i.equalsIgnoreCase(ingredient.trim()));
                         user.setInventory(inv);
                         userRepository.save(user);
+                    } else {
+                        inv = new ArrayList<>();
                     }
-                    return ResponseEntity.ok(inv != null ? inv : new ArrayList<>());
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(inv));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
