@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/challenge")
@@ -32,8 +33,7 @@ public class ChallengeController {
         if (inventory == null || inventory.isEmpty())
             return Map.of("status", "info", "message", "Inventory empty");
 
-        Set<Map<String, Object>> combinedMeals = new LinkedHashSet<>();
-        List<String> successfulIngredients = new ArrayList<>();
+        List<Map<String, Object>> allMeals = new ArrayList<>();
 
         for (String ingredient : inventory) {
             try {
@@ -42,34 +42,61 @@ public class ChallengeController {
 
                 if (result != null && result.get("meals") != null) {
                     List<Map<String, Object>> meals = (List<Map<String, Object>>) result.get("meals");
-                    if (!meals.isEmpty()) {
-                        successfulIngredients.add(ingredient);
-                        combinedMeals.addAll(meals);
-                    }
+                    allMeals.addAll(meals);
                 }
-
             } catch (Exception e) {
-                // ignore ingredient if API fails
                 continue;
             }
         }
 
-        if (combinedMeals.isEmpty())
+        if (allMeals.isEmpty())
             return Map.of("status", "info", "message", "No recipes found for any ingredients in your inventory");
+
+        // Deduplicate by idMeal
+        Map<String, Map<String, Object>> mealMap = new HashMap<>();
+        for (Map<String, Object> meal : allMeals) {
+            mealMap.put((String) meal.get("idMeal"), meal);
+        }
+
+        List<Map<String, Object>> uniqueMeals = new ArrayList<>(mealMap.values());
+
+        // Fetch full details for each meal to get ingredients
+        List<Map<String, Object>> detailedMeals = new ArrayList<>();
+        for (Map<String, Object> meal : uniqueMeals) {
+            try {
+                String mealId = (String) meal.get("idMeal");
+                Map<String, Object> details = restTemplate.getForObject(BASE_URL + "lookup.php?i=" + mealId, Map.class);
+                if (details != null && details.get("meals") != null) {
+                    Map<String, Object> fullMeal = ((List<Map<String, Object>>) details.get("meals")).get(0);
+
+                    // Count how many ingredients match user inventory
+                    int matchCount = 0;
+                    for (int i = 1; i <= 20; i++) {
+                        String key = "strIngredient" + i;
+                        String ing = (String) fullMeal.get(key);
+                        if (ing != null && !ing.isEmpty() && inventory.stream().anyMatch(inv -> inv.equalsIgnoreCase(ing.trim()))) {
+                            matchCount++;
+                        }
+                    }
+                    fullMeal.put("matchCount", matchCount);
+                    detailedMeals.add(fullMeal);
+                }
+            } catch (Exception e) {
+                continue;
+            }
+        }
+
+        // Sort by number of ingredients matched (descending)
+        detailedMeals.sort((a, b) -> ((Integer) b.get("matchCount")).compareTo((Integer) a.get("matchCount")));
 
         return Map.of(
                 "status", "success",
-                "successfulIngredients", successfulIngredients,
                 "totalIngredientsTested", inventory.size(),
-                "totalMealsFound", combinedMeals.size(),
-                "meals", combinedMeals,
-                "note", "Showing recipes that contain ANY of your ingredients"
+                "totalMealsFound", detailedMeals.size(),
+                "meals", detailedMeals,
+                "note", "Recipes sorted by number of ingredients you already have (best matches first)"
         );
     }
-
-
-
-
 
 
 
