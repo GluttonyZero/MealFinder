@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users/{userId}/inventory")
@@ -38,17 +39,23 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/remove")
-    public ResponseEntity<List<String>> removeIngredient(@PathVariable Long userId, @RequestBody String ingredient) {
-        String cleanIngredient = ingredient.replace("\"", "").trim(); // FIX for JSON strings
-        return userRepository.findById(userId)
-                .map(user -> {
-                    List<String> inv = user.getInventory();
-                    inv.remove(cleanIngredient);
-                    user.setInventory(inv);
-                    userRepository.save(user);
-                    return ResponseEntity.ok(inv);
-                })
-                .orElse(ResponseEntity.notFound().build());
+    // Remove ingredient
+@PostMapping("/remove")
+public ResponseEntity<List<String>> removeIngredient(@PathVariable Long userId, @RequestBody Map<String, String> payload) {
+    String ingredient = payload.get("ingredient");
+    if (ingredient == null || ingredient.isEmpty()) {
+        return ResponseEntity.badRequest().build();
     }
+
+    return userRepository.findById(userId)
+            .map(user -> {
+                List<String> inv = user.getInventory();
+                inv.removeIf(i -> i.equalsIgnoreCase(ingredient.trim())); // case-insensitive remove
+                user.setInventory(inv);
+                userRepository.save(user);
+                return ResponseEntity.ok(inv);
+            })
+            .orElse(ResponseEntity.notFound().build());
+}
+
 }

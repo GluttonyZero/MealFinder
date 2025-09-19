@@ -24,86 +24,88 @@ public class ChallengeController {
     private final String BASE_URL = "https://www.themealdb.com/api/json/v1/1/";
 
     // 1) Based on user inventory - REVISED FOR FREE API
-    @GetMapping("/from-inventory/{userId}")
-    public Object fromInventory(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return Map.of("status", "error", "message", "User not found");
-        }
+@GetMapping("/from-inventory/{userId}")
+public Object fromInventory(@PathVariable Long userId) {
+    User user = userRepository.findById(userId).orElse(null);
+    if (user == null) {
+        return Map.of("status", "error", "message", "User not found");
+    }
 
-        List<String> inventory = user.getInventory();
-        if (inventory == null || inventory.isEmpty()) {
-            return Map.of("status", "info", "message", "Inventory empty");
-        }
+    List<String> inventory = user.getInventory();
+    if (inventory == null || inventory.isEmpty()) {
+        return Map.of("status", "info", "message", "Inventory empty");
+    }
 
-        // Clean and remove duplicates
-        List<String> cleanInventory = inventory.stream()
-            .distinct()
-            .map(String::trim)
-            .collect(Collectors.toList());
+    // Clean and remove duplicates
+    List<String> cleanInventory = inventory.stream()
+        .distinct()
+        .map(String::trim)
+        .collect(Collectors.toList());
 
-        // Search for recipes using each ingredient individually
-        Map<String, Map<String, Object>> allMeals = new LinkedHashMap<>();
-        List<String> successfulIngredients = new ArrayList<>();
+    // Search for recipes using each ingredient individually
+    Map<String, Map<String, ?>> allMeals = new LinkedHashMap<>();
+    List<String> successfulIngredients = new ArrayList<>();
 
-        for (String ingredient : cleanInventory) {
-            try {
-                Map<String, Object> result = searchByIngredient(ingredient);
-                if (result != null && result.containsKey("meals") && result.get("meals") != null) {
-                    List<?> mealsRaw = (List<?>) result.get("meals");
-                    List<Map<String, Object>> meals = mealsRaw.stream()
-                        .filter(o -> o instanceof Map)
-                        .map(o -> (Map<String, Object>) o)
-                        .collect(Collectors.toList());
+    for (String ingredient : cleanInventory) {
+        try {
+            Map<String, Object> result = searchByIngredient(ingredient);
 
-                    if (!meals.isEmpty()) {
-                        successfulIngredients.add(ingredient);
+            if (result != null && result.containsKey("meals") && result.get("meals") != null) {
+                List<?> mealsRaw = (List<?>) result.get("meals");
 
-                        // Add all meals to combined results
-                        for (Map<String, Object> meal : meals) {
-                            String mealId = (String) meal.get("idMeal");
-                            if (!allMeals.containsKey(mealId)) {
-                                allMeals.put(mealId, meal);
-                            }
+                // Convert to Map<String, ?>
+                List<Map<String, ?>> meals = mealsRaw.stream()
+                    .filter(o -> o instanceof Map)
+                    .map(o -> new HashMap<>((Map<String, ?>) o))
+                    .collect(Collectors.toList());
+
+                if (!meals.isEmpty()) {
+                    successfulIngredients.add(ingredient);
+
+                    // Add all meals to combined results without duplicates
+                    for (Map<String, ?> meal : meals) {
+                        String mealId = (String) meal.get("idMeal");
+                        if (!allMeals.containsKey(mealId)) {
+                            allMeals.put(mealId, meal);
                         }
                     }
                 }
-
-                // Small delay to avoid rate limiting
-                Thread.sleep(200);
-            } catch (Exception e) {
-                continue;
             }
-        }
 
-        if (allMeals.isEmpty()) {
-            return Map.of("status", "info", "message", "No recipes found for any ingredients in your inventory");
-        }
-
-        // Convert map values to typed list safely
-        List<Map<String, Object>> combinedMeals = allMeals.values().stream()
-            .map(m -> (Map<String, Object>) m)
-            .collect(Collectors.toList());
-
-        return Map.of(
-            "status", "success",
-            "successfulIngredients", successfulIngredients,
-            "totalIngredientsTested", cleanInventory.size(),
-            "meals", combinedMeals,
-            "totalMealsFound", combinedMeals.size(),
-            "note", "Showing recipes that contain ANY of your ingredients"
-        );
-    }
-
-    private Map<String, Object> searchByIngredient(String ingredient) {
-        try {
-            String encodedIngredient = URLEncoder.encode(ingredient, StandardCharsets.UTF_8.toString());
-            String url = BASE_URL + "filter.php?i=" + encodedIngredient;
-            return restTemplate.getForObject(url, Map.class);
+            // Small delay to avoid rate limiting
+            Thread.sleep(200);
         } catch (Exception e) {
-            return null;
+            // Ignore failed ingredients
+            continue;
         }
     }
+
+    if (allMeals.isEmpty()) {
+        return Map.of("status", "info", "message", "No recipes found for any ingredients in your inventory");
+    }
+
+    // Convert map values to list
+    List<Map<String, ?>> combinedMeals = new ArrayList<>(allMeals.values());
+
+    return Map.of(
+        "status", "success",
+        "successfulIngredients", successfulIngredients,
+        "totalIngredientsTested", cleanInventory.size(),
+        "meals", combinedMeals,
+        "totalMealsFound", combinedMeals.size(),
+        "note", "Showing recipes that contain ANY of your ingredients"
+    );
+}
+
+private Map<String, Object> searchByIngredient(String ingredient) {
+    try {
+        String encodedIngredient = URLEncoder.encode(ingredient, StandardCharsets.UTF_8.toString());
+        String url = BASE_URL + "filter.php?i=" + encodedIngredient;
+        return restTemplate.getForObject(url, Map.class);
+    } catch (Exception e) {
+        return null;
+    }
+}
 
     // 2) surprise me: random
     @GetMapping("/random")
