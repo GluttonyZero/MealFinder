@@ -23,101 +23,52 @@ public class ChallengeController {
 
     private final String BASE_URL = "https://www.themealdb.com/api/json/v1/1/";
 
-    // Option 3: From Inventory — fetch all meals once and filter locally
     @GetMapping("/from-inventory/{userId}")
     public Object fromInventory(@PathVariable Long userId) {
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return Map.of("status", "error", "message", "User not found");
-        }
+        if (user == null) return Map.of("status", "error", "message", "User not found");
 
         List<String> inventory = user.getInventory();
-        if (inventory == null || inventory.isEmpty()) {
+        if (inventory == null || inventory.isEmpty())
             return Map.of("status", "info", "message", "Inventory empty");
-        }
 
-        // Clean and normalize inventory
-        List<String> cleanInventory = inventory.stream()
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .distinct()
-                .toList();
+        Set<Map<String, Object>> combinedMeals = new LinkedHashSet<>();
+        List<String> successfulIngredients = new ArrayList<>();
 
-        List<Map<String, Object>> matchingMeals = new ArrayList<>();
+        for (String ingredient : inventory) {
+            try {
+                String encoded = URLEncoder.encode(ingredient.trim(), StandardCharsets.UTF_8);
+                Map<String, Object> result = restTemplate.getForObject(BASE_URL + "filter.php?i=" + encoded, Map.class);
 
-        try {
-            // 1. Fetch all meals from MealDB
-            String categoriesUrl = BASE_URL + "categories.php";
-            Map<String, Object> categoriesResult = restTemplate.getForObject(categoriesUrl, Map.class);
-            if (categoriesResult == null || !categoriesResult.containsKey("categories")) {
-                return Map.of("status", "error", "message", "Could not fetch categories");
-            }
-
-            List<Map<String, Object>> categories = (List<Map<String, Object>>) categoriesResult.get("categories");
-
-            // 2. Loop through each category and fetch meals
-            for (Map<String, Object> category : categories) {
-                String categoryName = (String) category.get("strCategory");
-                String url = BASE_URL + "filter.php?c=" + URLEncoder.encode(categoryName, StandardCharsets.UTF_8);
-                Map<String, Object> mealsResult = restTemplate.getForObject(url, Map.class);
-                if (mealsResult == null || mealsResult.get("meals") == null) continue;
-
-                List<Map<String, Object>> meals = (List<Map<String, Object>>) mealsResult.get("meals");
-                for (Map<String, Object> mealSummary : meals) {
-                    String mealId = (String) mealSummary.get("idMeal");
-                    // Fetch full meal details
-                    Map<String, Object> fullMealResult = restTemplate.getForObject(BASE_URL + "lookup.php?i=" + mealId, Map.class);
-                    if (fullMealResult == null || fullMealResult.get("meals") == null) continue;
-
-                    List<Map<String, Object>> fullMeals = (List<Map<String, Object>>) fullMealResult.get("meals");
-                    if (fullMeals.isEmpty()) continue;
-                    Map<String, Object> mealDetails = fullMeals.get(0);
-
-                    // Collect all ingredients from meal
-                    Set<String> mealIngredients = new HashSet<>();
-                    for (int i = 1; i <= 20; i++) {
-                        Object ing = mealDetails.get("strIngredient" + i);
-                        if (ing != null) {
-                            String ingStr = ing.toString().trim().toLowerCase();
-                            if (!ingStr.isEmpty()) mealIngredients.add(ingStr);
-                        }
-                    }
-
-                    // Check if any inventory ingredient is in meal
-                    boolean matches = cleanInventory.stream().anyMatch(mealIngredients::contains);
-                    if (matches) {
-                        matchingMeals.add(mealDetails);
+                if (result != null && result.get("meals") != null) {
+                    List<Map<String, Object>> meals = (List<Map<String, Object>>) result.get("meals");
+                    if (!meals.isEmpty()) {
+                        successfulIngredients.add(ingredient);
+                        combinedMeals.addAll(meals);
                     }
                 }
+
+            } catch (Exception e) {
+                // ignore ingredient if API fails
+                continue;
             }
-
-        } catch (Exception e) {
-            return Map.of("status", "error", "message", "Error fetching meals: " + e.getMessage());
         }
 
-        if (matchingMeals.isEmpty()) {
+        if (combinedMeals.isEmpty())
             return Map.of("status", "info", "message", "No recipes found for any ingredients in your inventory");
-        }
 
         return Map.of(
                 "status", "success",
-                "inventoryUsed", cleanInventory,
-                "meals", matchingMeals,
-                "totalMealsFound", matchingMeals.size(),
+                "successfulIngredients", successfulIngredients,
+                "totalIngredientsTested", inventory.size(),
+                "totalMealsFound", combinedMeals.size(),
+                "meals", combinedMeals,
                 "note", "Showing recipes that contain ANY of your ingredients"
         );
     }
 
 
-private Map<String, Object> searchByIngredient(String ingredient) {
-    try {
-        String encodedIngredient = URLEncoder.encode(ingredient, StandardCharsets.UTF_8.toString());
-        String url = BASE_URL + "filter.php?i=" + encodedIngredient;
-        return restTemplate.getForObject(url, Map.class);
-    } catch (Exception e) {
-        return null;
-    }
-}
+
 
 
 
