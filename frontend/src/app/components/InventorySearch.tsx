@@ -1,5 +1,5 @@
-// components/InventorySearch.tsx
 "use client";
+
 import React, { useState, useEffect } from "react";
 
 interface InventorySearchProps {
@@ -7,10 +7,7 @@ interface InventorySearchProps {
   disabled?: boolean;
 }
 
-const InventorySearch: React.FC<InventorySearchProps> = ({
-  onAddIngredient,
-  disabled = false,
-}) => {
+const InventorySearch: React.FC<InventorySearchProps> = ({ onAddIngredient, disabled = false }) => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [allIngredients, setAllIngredients] = useState<string[]>([]);
@@ -23,16 +20,9 @@ const InventorySearch: React.FC<InventorySearchProps> = ({
   const fetchIngredients = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://www.themealdb.com/api/json/v1/1/list.php?i=list"
-      );
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/list.php?i=list");
       const data = await res.json();
-      if (data.meals) {
-        const list: string[] = data.meals.map(
-          (m: { strIngredient: string }) => m.strIngredient
-        );
-        setAllIngredients(list);
-      }
+      if (data.meals) setAllIngredients(data.meals.map((m: any) => m.strIngredient));
     } catch (err) {
       console.error("Failed to load ingredients:", err);
     } finally {
@@ -41,25 +31,15 @@ const InventorySearch: React.FC<InventorySearchProps> = ({
   };
 
   useEffect(() => {
-    if (!search) {
-      setSuggestions([]);
-      return;
-    }
-    const filtered = allIngredients
-      .filter((i) => i.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 10);
+    if (!search) return setSuggestions([]);
+    const filtered = allIngredients.filter((i) => i.toLowerCase().includes(search.toLowerCase())).slice(0, 10);
     setSuggestions(filtered);
   }, [search, allIngredients]);
 
   const handleAdd = (ingredient: string) => {
-    try {
-      // ensure backend receives { ingredient: "name" } format
-      onAddIngredient(ingredient);
-      setSearch("");
-      setSuggestions([]);
-    } catch (err) {
-      console.error("Failed to add ingredient:", err);
-    }
+    onAddIngredient(ingredient);
+    setSearch("");
+    setSuggestions([]);
   };
 
   return (
@@ -73,11 +53,7 @@ const InventorySearch: React.FC<InventorySearchProps> = ({
         disabled={disabled || loading}
       />
 
-      {loading && (
-        <div className="absolute right-3 top-3">
-          <div className="loading-spinner"></div>
-        </div>
-      )}
+      {loading && <div className="absolute right-3 top-3"><div className="loading-spinner"></div></div>}
 
       {suggestions.length > 0 && (
         <ul className="absolute z-10 border border-gray-600 bg-gray-800 max-h-40 overflow-y-auto w-full rounded mt-1 shadow-lg">
