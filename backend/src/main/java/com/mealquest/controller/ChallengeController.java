@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/challenge")
-@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder")
+@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder", allowCredentials = "true")
 public class ChallengeController {
 
     @Autowired
@@ -45,11 +45,11 @@ public class ChallengeController {
                     List<Map<String, Object>> meals = (List<Map<String, Object>>) result.get("meals");
                     for (Map<String, Object> meal : meals) {
                         String mealId = (String) meal.get("idMeal");
-                        allMealsMap.putIfAbsent(mealId, meal); // deduplicate
+                        allMealsMap.putIfAbsent(mealId, meal); // deduplicate by id
                     }
                 }
             } catch (Exception e) {
-                continue;
+                // skip ingredient errors
             }
         }
 
@@ -71,11 +71,11 @@ public class ChallengeController {
                     for (int i = 1; i <= 20; i++) {
                         String key = "strIngredient" + i;
                         String ing = (String) fullMeal.get(key);
-                        if (ing != null && !ing.isEmpty()) {
+                        if (ing != null && !ing.trim().isEmpty()) {
                             for (String inv : inventory) {
                                 if (ing.trim().equalsIgnoreCase(inv.trim())) {
                                     matchCount++;
-                                    break; // prevent double-counting
+                                    break; // avoid double counting same ingredient
                                 }
                             }
                         }
@@ -84,7 +84,7 @@ public class ChallengeController {
                     detailedMeals.add(fullMeal);
                 }
             } catch (Exception e) {
-                continue;
+                // skip failed detail lookups
             }
         }
 
