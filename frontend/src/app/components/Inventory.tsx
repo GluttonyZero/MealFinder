@@ -16,26 +16,24 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const fetchInventory = async () => {
+    if (!API_BASE_URL) return setError("Backend URL not configured");
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
+      if (!res.ok) throw new Error("Failed to load inventory");
+      const data = await res.json();
+      setInventory(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError("Failed to load inventory");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInventory = async () => {
-      setLoading(true);
-      setError("");
-      if (!API_BASE_URL) return setError("Backend URL not configured");
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
-        if (!res.ok) throw new Error("Failed to load inventory");
-        const data = await res.json();
-        setInventory(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError("Failed to load inventory");
-        console.error(err);
-        setInventory([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchInventory();
   }, [user]);
 
@@ -43,16 +41,13 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     if (!API_BASE_URL) return setError("Backend URL not configured");
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredient }),
       });
-
       if (!res.ok) throw new Error("Failed to add ingredient");
-
       const updated = await res.json();
       setInventory(Array.isArray(updated) ? updated : []);
       onInventoryChange?.();
@@ -68,16 +63,13 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     if (!API_BASE_URL) return setError("Backend URL not configured");
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/remove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredient }),
       });
-
       if (!res.ok) throw new Error("Failed to remove ingredient");
-
       const updated = await res.json();
       setInventory(Array.isArray(updated) ? updated : []);
       onInventoryChange?.();
@@ -92,9 +84,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Your Inventory</h2>
-
       {error && <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>}
-
       <InventorySearch onAddIngredient={addIngredient} disabled={loading} />
 
       <div className="mt-4">
