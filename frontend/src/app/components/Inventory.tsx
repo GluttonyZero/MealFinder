@@ -16,33 +16,29 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // --- Fetch inventory ---
   useEffect(() => {
-    const fetchInventory = async () => {
-      setLoading(true);
-      setError("");
-      if (!API_BASE_URL) return setError("Backend URL not configured");
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`, {
-          credentials: "include", // ✅ FIX: send cookies/session
-        });
-        if (!res.ok) throw new Error("Failed to load inventory");
-        const data = await res.json();
-        setInventory(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError("Failed to load inventory");
-        console.error(err);
-        setInventory([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchInventory();
   }, [user]);
 
-  // --- Add ingredient ---
+  const fetchInventory = async () => {
+    setLoading(true);
+    setError("");
+    if (!API_BASE_URL) return setError("Backend URL not configured");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
+      if (!res.ok) throw new Error("Failed to load inventory");
+      const data = await res.json();
+      setInventory(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError("Failed to load inventory");
+      console.error(err);
+      setInventory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addIngredient = async (ingredient: string) => {
     if (!API_BASE_URL) return setError("Backend URL not configured");
     setLoading(true);
@@ -52,7 +48,6 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ FIX
         body: JSON.stringify({ ingredient }),
       });
 
@@ -69,7 +64,6 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     }
   };
 
-  // --- Remove ingredient ---
   const removeIngredient = async (ingredient: string) => {
     if (!API_BASE_URL) return setError("Backend URL not configured");
     setLoading(true);
@@ -79,7 +73,6 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/remove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ FIX
         body: JSON.stringify({ ingredient }),
       });
 
@@ -105,9 +98,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       <InventorySearch onAddIngredient={addIngredient} disabled={loading} />
 
       <div className="mt-4">
-        <h3 className="text-lg font-semibold mb-3">
-          Current Ingredients ({inventory.length})
-        </h3>
+        <h3 className="text-lg font-semibold mb-3">Current Ingredients ({inventory.length})</h3>
         {inventory.length === 0 ? (
           <div className="text-gray-400 p-4 text-center bg-gray-700 rounded">
             No ingredients in your inventory yet. Search above to add some!
@@ -115,10 +106,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {inventory.map((item) => (
-              <div
-                key={item}
-                className="bg-blue-600 text-white px-3 py-2 rounded flex items-center justify-between"
-              >
+              <div key={item} className="bg-blue-600 text-white px-3 py-2 rounded flex items-center justify-between">
                 <span className="truncate">{item}</span>
                 <button
                   onClick={() => removeIngredient(item)}
