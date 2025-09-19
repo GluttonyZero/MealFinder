@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { User } from "../types/user";
-import Image from "next/image";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -31,9 +30,18 @@ export default function ChallengeOptions({ user }: Props) {
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch meals");
+
       const data = await res.json();
-      if (data.meals && Array.isArray(data.meals)) setMealResult(data.meals);
-      else setError("No meals found. Try different ingredients!");
+
+      // Handle backend response for "from-inventory" and other endpoints
+      if (data.status === "success" && data.meals && Array.isArray(data.meals)) {
+        setMealResult(data.meals);
+      } else if (data.status === "info" || data.status === "error") {
+        setError(data.message || "No meals found");
+      } else {
+        setError("Unexpected response from server");
+        console.log("Unexpected data:", data);
+      }
     } catch (err) {
       setError("Failed to fetch meals. Please try again.");
       console.error(err);
@@ -64,12 +72,16 @@ export default function ChallengeOptions({ user }: Props) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/challenge/lookup/${mealId}`);
       const data = await res.json();
-      if (data.meals && data.meals[0]) {
+      if (data.status === "success" && data.meals && data.meals[0]) {
         const meal = data.meals[0];
-        alert(`Recipe: ${meal.strMeal}\n\nInstructions: ${meal.strInstructions?.substring(0, 200)}...`);
+        alert(
+          `Recipe: ${meal.strMeal}\n\nInstructions: ${meal.strInstructions?.substring(0, 200)}...`
+        );
+      } else {
+        alert(data.message || "Recipe details not found");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch recipe details:", err);
     }
   };
 
@@ -78,18 +90,26 @@ export default function ChallengeOptions({ user }: Props) {
       <h2 className="text-2xl font-bold mb-4">Meal Challenges</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <button onClick={option1} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg disabled:opacity-50">
+        <button
+          onClick={option1}
+          disabled={loading}
+          className="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg disabled:opacity-50"
+        >
           🏠 From My Inventory
         </button>
 
-        <button onClick={option2} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700 text-white p-4 rounded-lg disabled:opacity-50">
+        <button
+          onClick={option2}
+          disabled={loading}
+          className="bg-yellow-600 hover:bg-yellow-700 text-white p-4 rounded-lg disabled:opacity-50"
+        >
           🎲 Surprise Me
         </button>
 
         <div className="md:col-span-2 flex gap-2">
           <input
             value={area}
-            onChange={e => setArea(e.target.value)}
+            onChange={(e) => setArea(e.target.value)}
             placeholder="Enter cuisine (e.g., Italian, Mexican)"
             className="flex-1 p-3 border border-gray-600 rounded bg-gray-700 text-white"
             disabled={loading}
@@ -103,7 +123,11 @@ export default function ChallengeOptions({ user }: Props) {
           </button>
         </div>
 
-        <button onClick={option4} disabled={loading} className="md:col-span-2 bg-pink-600 hover:bg-pink-700 text-white p-4 rounded-lg disabled:opacity-50">
+        <button
+          onClick={option4}
+          disabled={loading}
+          className="md:col-span-2 bg-pink-600 hover:bg-pink-700 text-white p-4 rounded-lg disabled:opacity-50"
+        >
           💰 Budget Meals
         </button>
       </div>
@@ -115,16 +139,17 @@ export default function ChallengeOptions({ user }: Props) {
           {mealResult.map((meal) => (
             <div key={meal.idMeal} className="bg-gray-700 p-4 rounded-lg">
               {meal.strMealThumb && (
-                <Image
+                <img
                   src={meal.strMealThumb}
                   alt={meal.strMeal}
-                  width={400}
-                  height={300}
-                  className="rounded mb-3 object-cover"
+                  className="w-full h-48 object-cover rounded mb-3"
                 />
               )}
               <h4 className="font-bold text-lg mb-2">{meal.strMeal}</h4>
-              <button onClick={() => viewRecipeDetails(meal.idMeal)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+              <button
+                onClick={() => viewRecipeDetails(meal.idMeal)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+              >
                 View Recipe
               </button>
             </div>
