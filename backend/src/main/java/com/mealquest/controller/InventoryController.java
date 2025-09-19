@@ -15,7 +15,6 @@ public class InventoryController {
     @Autowired
     private UserRepository userRepository;
 
-    // Get user inventory
     @GetMapping
     public ResponseEntity<List<String>> getInventory(@PathVariable Long userId) {
         return userRepository.findById(userId)
@@ -23,12 +22,9 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Add ingredient - FIXED to handle JSON strings
     @PostMapping("/add")
     public ResponseEntity<List<String>> addIngredient(@PathVariable Long userId, @RequestBody String ingredient) {
-        // Remove quotes and trim the ingredient string
-        String cleanIngredient = ingredient.replace("\"", "").trim();
-        
+        String cleanIngredient = ingredient.replace("\"", "").trim(); // FIX for JSON strings
         return userRepository.findById(userId)
                 .map(user -> {
                     List<String> inv = user.getInventory();
@@ -42,12 +38,9 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Remove ingredient - FIXED to handle JSON strings
     @PostMapping("/remove")
     public ResponseEntity<List<String>> removeIngredient(@PathVariable Long userId, @RequestBody String ingredient) {
-        // Remove quotes and trim the ingredient string
-        String cleanIngredient = ingredient.replace("\"", "").trim();
-        
+        String cleanIngredient = ingredient.replace("\"", "").trim(); // FIX for JSON strings
         return userRepository.findById(userId)
                 .map(user -> {
                     List<String> inv = user.getInventory();
