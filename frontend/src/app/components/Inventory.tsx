@@ -48,7 +48,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredient }),
+        body: JSON.stringify(ingredient), // FIX: send ingredient as string
       });
 
       if (!res.ok) throw new Error("Failed to add ingredient");
@@ -73,7 +73,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/remove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredient }),
+        body: JSON.stringify(ingredient),
       });
 
       if (!res.ok) throw new Error("Failed to remove ingredient");
