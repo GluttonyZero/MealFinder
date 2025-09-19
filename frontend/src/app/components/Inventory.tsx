@@ -17,27 +17,27 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const fetchInventory = async () => {
+      setLoading(true);
+      setError("");
+      if (!API_BASE_URL) return setError("Backend URL not configured");
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
+        if (!res.ok) throw new Error("Failed to load inventory");
+        const data = await res.json();
+        setInventory(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError("Failed to load inventory");
+        console.error(err);
+        setInventory([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchInventory();
   }, [user]);
-
-  const fetchInventory = async () => {
-    setLoading(true);
-    setError("");
-    if (!API_BASE_URL) return setError("Backend URL not configured");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
-      if (!res.ok) throw new Error("Failed to load inventory");
-      const data = await res.json();
-      setInventory(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError("Failed to load inventory");
-      console.error(err);
-      setInventory([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const addIngredient = async (ingredient: string) => {
     if (!API_BASE_URL) return setError("Backend URL not configured");
@@ -48,7 +48,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ingredient), // FIX: send ingredient as string
+        body: JSON.stringify({ ingredient }),
       });
 
       if (!res.ok) throw new Error("Failed to add ingredient");
@@ -73,7 +73,7 @@ export default function Inventory({ user, onInventoryChange }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory/remove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ingredient),
+        body: JSON.stringify({ ingredient }),
       });
 
       if (!res.ok) throw new Error("Failed to remove ingredient");

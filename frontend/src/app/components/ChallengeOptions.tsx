@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { User } from "../types/user";
+import Image from "next/image";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Props {
@@ -112,7 +114,15 @@ export default function ChallengeOptions({ user }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mealResult.map((meal) => (
             <div key={meal.idMeal} className="bg-gray-700 p-4 rounded-lg">
-              {meal.strMealThumb && <img src={meal.strMealThumb} alt={meal.strMeal} className="w-full h-48 object-cover rounded mb-3" />}
+              {meal.strMealThumb && (
+                <Image
+                  src={meal.strMealThumb}
+                  alt={meal.strMeal}
+                  width={400}
+                  height={300}
+                  className="rounded mb-3 object-cover"
+                />
+              )}
               <h4 className="font-bold text-lg mb-2">{meal.strMeal}</h4>
               <button onClick={() => viewRecipeDetails(meal.idMeal)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
                 View Recipe
