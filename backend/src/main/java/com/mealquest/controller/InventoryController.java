@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users/{userId}/inventory")
-@CrossOrigin(origins = "*") // Allow all origins temporarily for testing
 public class InventoryController {
 
     @Autowired
@@ -26,66 +25,42 @@ public class InventoryController {
     }
 
     // Add ingredient
-@PostMapping("/add")
-public ResponseEntity<List<String>> addIngredient(
-        @PathVariable Long userId,
-        @RequestBody Object payload) {
+    @PostMapping("/add")
+    public ResponseEntity<List<String>> addIngredient(@PathVariable Long userId, @RequestBody Map<String, String> payload) {
+        String ingredient = payload.get("ingredient");
+        if (ingredient == null || ingredient.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
 
-    String ingredient = null;
-
-    if (payload instanceof Map) {
-        ingredient = (String) ((Map<?, ?>) payload).get("ingredient");
-    } else if (payload instanceof String) {
-        ingredient = (String) payload;
+        return userRepository.findById(userId)
+                .map(user -> {
+                    List<String> inv = user.getInventory();
+                    if (inv.stream().noneMatch(i -> i.equalsIgnoreCase(ingredient.trim()))) {
+                        inv.add(ingredient.trim());
+                        user.setInventory(inv);
+                        userRepository.save(user);
+                    }
+                    return ResponseEntity.ok(inv);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    if (ingredient == null || ingredient.isBlank()) {
-        return ResponseEntity.badRequest().build();
-    }
+    // Remove ingredient
+    @PostMapping("/remove")
+    public ResponseEntity<List<String>> removeIngredient(@PathVariable Long userId, @RequestBody Map<String, String> payload) {
+        String ingredient = payload.get("ingredient");
+        if (ingredient == null || ingredient.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
 
-    String cleanIngredient = ingredient.trim();
-
-    return userRepository.findById(userId)
-            .map(user -> {
-                List<String> inv = user.getInventory();
-                if (inv.stream().noneMatch(i -> i.equalsIgnoreCase(cleanIngredient))) {
-                    inv.add(cleanIngredient);
+        return userRepository.findById(userId)
+                .map(user -> {
+                    List<String> inv = user.getInventory();
+                    inv.removeIf(i -> i.equalsIgnoreCase(ingredient.trim()));
                     user.setInventory(inv);
                     userRepository.save(user);
-                }
-                return ResponseEntity.ok(inv);
-            })
-            .orElse(ResponseEntity.notFound().build());
-}
-
-// Remove ingredient
-@PostMapping("/remove")
-public ResponseEntity<List<String>> removeIngredient(
-        @PathVariable Long userId,
-        @RequestBody Object payload) {
-
-    String ingredient = null;
-
-    if (payload instanceof Map) {
-        ingredient = (String) ((Map<?, ?>) payload).get("ingredient");
-    } else if (payload instanceof String) {
-        ingredient = (String) payload;
-    }
-
-    if (ingredient == null || ingredient.isBlank()) {
-        return ResponseEntity.badRequest().build();
-    }
-
-    String cleanIngredient = ingredient.trim();
-
-    return userRepository.findById(userId)
-            .map(user -> {
-                List<String> inv = user.getInventory();
-                inv.removeIf(i -> i.equalsIgnoreCase(cleanIngredient));
-                user.setInventory(inv);
-                userRepository.save(user);
-                return ResponseEntity.ok(inv);
-            })
-            .orElse(ResponseEntity.notFound().build());
+                    return ResponseEntity.ok(inv);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

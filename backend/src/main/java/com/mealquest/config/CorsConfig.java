@@ -13,9 +13,9 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                            "http://localhost:3000",      // for local dev
-                            "https://gluttonyzero.github.io" // for GitHub Pages
+                        .allowedOriginPatterns(
+                            "http://localhost:3000",       // local dev
+                            "https://gluttonyzero.github.io" // GitHub Pages
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
