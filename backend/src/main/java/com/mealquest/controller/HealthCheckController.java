@@ -1,5 +1,6 @@
 package com.mealquest.controller;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,5 +24,12 @@ public class HealthCheckController {
         status.put("timestamp", Instant.now().toString());
         status.put("uptimeSeconds", ManagementFactory.getRuntimeMXBean().getUptime() / 1000);
         return status;
+    }
+
+    // Scheduled task that calls ping() every 5 minutes
+    @Scheduled(fixedRate = 300000) // 5 minutes in milliseconds
+    public void scheduledPing() {
+        String response = ping(); // call the ping() method directly
+        System.out.println("Scheduled ping response: " + response + " at " + Instant.now());
     }
 }
