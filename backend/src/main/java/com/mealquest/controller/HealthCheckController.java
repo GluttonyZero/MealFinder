@@ -27,9 +27,4 @@ public class HealthCheckController {
     }
 
     // Scheduled task that calls ping() every 5 minutes
-    @Scheduled(fixedRate = 300000) // 5 minutes in milliseconds
-    public void scheduledPing() {
-        String response = ping(); // call the ping() method directly
-        System.out.println("Scheduled ping response: " + response + " at " + Instant.now());
-    }
 }
