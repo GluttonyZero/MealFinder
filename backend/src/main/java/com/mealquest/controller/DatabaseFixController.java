@@ -1,4 +1,3 @@
-// EmergencyFixController.java
 package com.mealquest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,41 +8,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-public class EmergencyFixController {
+public class DatabaseFixController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @GetMapping("/api/fix-tables")
-    public Map<String, Object> fixTables() {
+    @GetMapping("/api/fix-database")
+    public Map<String, Object> fixDatabase() {
         Map<String, Object> response = new HashMap<>();
         
         try {
             // Drop tables if they exist
-            jdbcTemplate.execute("DROP TABLE IF EXISTS user_inventory");
             jdbcTemplate.execute("DROP TABLE IF EXISTS users");
             
-            // Create users table
+            // Create users table with proper structure
             jdbcTemplate.execute(
                 "CREATE TABLE users (" +
                 "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
                 "username VARCHAR(255) NOT NULL UNIQUE, " +
                 "password VARCHAR(255) NOT NULL, " +
-                "email VARCHAR(255) NOT NULL UNIQUE" +
-                ")"
-            );
-            
-            // Create inventory table
-            jdbcTemplate.execute(
-                "CREATE TABLE user_inventory (" +
-                "user_id BIGINT NOT NULL, " +
-                "ingredient VARCHAR(255), " +
-                "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE" +
+                "email VARCHAR(255) NOT NULL UNIQUE, " +
+                "inventory_json TEXT DEFAULT '[]'" +
                 ")"
             );
             
             response.put("status", "success");
-            response.put("message", "Tables created successfully");
+            response.put("message", "Database tables created successfully");
             
         } catch (Exception e) {
             response.put("status", "error");
@@ -53,30 +43,19 @@ public class EmergencyFixController {
         return response;
     }
 
-    @GetMapping("/api/check-tables")
-    public Map<String, Object> checkTables() {
+    @GetMapping("/api/check-database")
+    public Map<String, Object> checkDatabase() {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Check if users table exists
-            jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM users", 
-                Integer.class
-            );
+            // Check if users table exists and has data
+            Integer userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
             response.put("users_table", "EXISTS");
+            response.put("user_count", userCount);
+            response.put("database", "HEALTHY");
         } catch (Exception e) {
             response.put("users_table", "MISSING");
-        }
-        
-        try {
-            // Check if inventory table exists
-            jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_inventory", 
-                Integer.class
-            );
-            response.put("inventory_table", "EXISTS");
-        } catch (Exception e) {
-            response.put("inventory_table", "MISSING");
+            response.put("database", "ERROR: " + e.getMessage());
         }
         
         return response;

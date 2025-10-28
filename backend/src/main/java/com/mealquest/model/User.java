@@ -15,32 +15,33 @@ public class User {
     private Long id;
 
     @NotBlank
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
     @NotBlank
+    @Column(nullable = false)
     private String password;
 
     @Email
     @NotBlank
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-        name = "user_inventory", 
-        joinColumns = @JoinColumn(name = "user_id")
-    )
-    @Column(name = "ingredient")
-    private List<String> inventory = new ArrayList<>();
+    // SIMPLIFIED: Store inventory as JSON string to avoid join table issues
+    @Column(columnDefinition = "TEXT")
+    private String inventoryJson = "[]";
 
+    // Constructors
     public User() {}
 
     public User(String username, String password, String email) {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.inventoryJson = "[]";
     }
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -53,67 +54,59 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public List<String> getInventory() { return inventory; }
-    public void setInventory(List<String> inventory) { this.inventory = inventory; }
+    public String getInventoryJson() { return inventoryJson; }
+    public void setInventoryJson(String inventoryJson) { this.inventoryJson = inventoryJson; }
+
+    // Helper methods to work with inventory as List
+    public List<String> getInventory() {
+        try {
+            if (inventoryJson == null || inventoryJson.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            // Simple JSON parsing - in production use a proper JSON library
+            String cleanJson = inventoryJson.replace("[", "").replace("]", "").replace("\"", "");
+            if (cleanJson.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            List<String> inventory = new ArrayList<>();
+            for (String item : cleanJson.split(",")) {
+                if (!item.trim().isEmpty()) {
+                    inventory.add(item.trim());
+                }
+            }
+            return inventory;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public void setInventory(List<String> inventory) {
+        if (inventory == null || inventory.isEmpty()) {
+            this.inventoryJson = "[]";
+        } else {
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < inventory.size(); i++) {
+                sb.append("\"").append(inventory.get(i)).append("\"");
+                if (i < inventory.size() - 1) {
+                    sb.append(",");
+                }
+            }
+            sb.append("]");
+            this.inventoryJson = sb.toString();
+        }
+    }
 
     public void addToInventory(String ingredient) {
-        if (!inventory.contains(ingredient)) {
-            inventory.add(ingredient);
+        List<String> current = getInventory();
+        if (!current.contains(ingredient)) {
+            current.add(ingredient);
+            setInventory(current);
         }
     }
 
     public void removeFromInventory(String ingredient) {
-        inventory.remove(ingredient);
-    }
-
-    public void clearInventory() {
-        inventory.clear();
-    }
-
-    public boolean hasIngredient(String ingredient) {
-        return inventory.contains(ingredient);
-    }
-
-    public int getInventorySize() {
-        return inventory.size();
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", inventory=" + inventory +
-                '}';
-    }
-
-    public static User createUser(String username, String email, String password) {
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setInventory(new ArrayList<>());
-        return user;
-    }
-
-    public void addMultipleToInventory(List<String> ingredients) {
-        for (String ingredient : ingredients) {
-            if (!inventory.contains(ingredient)) {
-                inventory.add(ingredient);
-            }
-        }
-    }
-
-    public void removeMultipleFromInventory(List<String> ingredients) {
-        inventory.removeAll(ingredients);
-    }
-
-    public boolean isInventoryEmpty() {
-        return inventory.isEmpty();
-    }
-
-    public List<String> getInventoryCopy() {
-        return new ArrayList<>(inventory);
+        List<String> current = getInventory();
+        current.remove(ingredient);
+        setInventory(current);
     }
 }

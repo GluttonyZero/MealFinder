@@ -1,4 +1,3 @@
-// AuthController.java
 package com.mealquest.controller;
 
 import com.mealquest.model.User;
@@ -10,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:3000", "https://gluttonyzero.github.io"})
+@CrossOrigin(origins = {"http://localhost:3000", "https://gluttonyzero.github.io", "https://mealfinder-0tmr.onrender.com"})
 public class AuthController {
 
     @Autowired
@@ -19,12 +18,16 @@ public class AuthController {
     @PostMapping("/register")
     public AuthResponse register(@RequestBody User user) {
         System.out.println("Register endpoint called for user: " + user.getUsername());
-        return authService.register(user);
+        AuthResponse response = authService.register(user);
+        System.out.println("Registration response: " + response.getStatus());
+        return response;
     }
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest loginRequest) {
         System.out.println("Login endpoint called for user: " + loginRequest.getUsername());
-        return authService.login(loginRequest);
+        AuthResponse response = authService.login(loginRequest);
+        System.out.println("Login response: " + response.getStatus());
+        return response;
     }
 }

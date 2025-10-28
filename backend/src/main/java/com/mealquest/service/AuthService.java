@@ -19,6 +19,8 @@ public class AuthService {
     }
 
     public AuthResponse register(User user) {
+        System.out.println("Registering user: " + user.getUsername());
+        
         if (userRepository.existsByUsername(user.getUsername())) {
             return new AuthResponse("FAIL", "Username already exists");
         }
@@ -28,15 +30,22 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
+        System.out.println("User registered successfully with ID: " + savedUser.getId());
+        
         return new AuthResponse("SUCCESS", "Registration successful", savedUser.getId());
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
+        System.out.println("Logging in user: " + loginRequest.getUsername());
+        
         Optional<User> user = userRepository.findByUsername(loginRequest.getUsername());
         
         if (user.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), user.get().getPassword())) {
+            System.out.println("Login successful for user: " + user.get().getUsername());
             return new AuthResponse("SUCCESS", "Login successful", user.get().getId());
         }
+        
+        System.out.println("Login failed for user: " + loginRequest.getUsername());
         return new AuthResponse("FAIL", "Invalid credentials");
     }
 }
