@@ -1,3 +1,4 @@
+// components/InventorySearch.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -11,6 +12,10 @@ interface MealDBIngredient {
   strIngredient: string;
 }
 
+interface MealDBResponse {
+  meals: MealDBIngredient[];
+}
+
 const InventorySearch: React.FC<InventorySearchProps> = ({ onAddIngredient, disabled = false }) => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -22,7 +27,7 @@ const InventorySearch: React.FC<InventorySearchProps> = ({ onAddIngredient, disa
       setLoading(true);
       try {
         const res = await fetch("https://www.themealdb.com/api/json/v1/1/list.php?i=list");
-        const data = await res.json();
+        const data: MealDBResponse = await res.json();
         if (data.meals) {
           const list: string[] = data.meals.map((m: MealDBIngredient) => m.strIngredient);
           setAllIngredients(list);

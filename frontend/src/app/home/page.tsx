@@ -1,6 +1,7 @@
+// app/home/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Inventory from "../components/Inventory";
 import ChallengeOptions from "../components/ChallengeOptions";
@@ -14,16 +15,7 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    const userId = localStorage.getItem("mealquest_userId");
-    if (!userId) {
-      router.push("/MealFinder/login");
-      return;
-    }
-    fetchUser(userId);
-  }, [router]);
-
-  const fetchUser = async (userId: string) => {
+  const fetchUser = useCallback(async (userId: string) => {
     if (!API_BASE_URL) {
       setError("Backend URL not configured");
       setLoading(false);
@@ -44,7 +36,16 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("mealquest_userId");
+    if (!userId) {
+      router.push("/MealFinder/login");
+      return;
+    }
+    fetchUser(userId);
+  }, [router, fetchUser]);
 
   const handleLogout = () => {
     localStorage.removeItem("mealquest_userId");

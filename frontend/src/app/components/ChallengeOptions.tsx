@@ -14,6 +14,15 @@ interface Meal {
   strMeal: string;
   strMealThumb?: string;
   strInstructions?: string;
+  [key: string]: unknown; // For other dynamic properties
+}
+
+interface MealApiResponse {
+  meals?: Meal[];
+  status?: string;
+  message?: string;
+  ingredient?: string;
+  count?: number;
 }
 
 export default function ChallengeOptions({ user }: Props) {
@@ -33,12 +42,14 @@ export default function ChallengeOptions({ user }: Props) {
         throw new Error("Failed to fetch meals");
       }
       
-      const data = await res.json();
+      const data: MealApiResponse = await res.json();
       
       if (data.meals && Array.isArray(data.meals)) {
         setMealResult(data.meals);
       } else if (typeof data === 'string') {
         setError(data);
+      } else if (data.message) {
+        setError(data.message);
       } else {
         setError("No meals found. Try different ingredients!");
       }
@@ -73,7 +84,7 @@ export default function ChallengeOptions({ user }: Props) {
   const viewRecipeDetails = async (mealId: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/challenge/lookup/${mealId}`);
-      const data = await res.json();
+      const data: MealApiResponse = await res.json();
       if (data.meals && data.meals[0]) {
         const meal = data.meals[0];
         alert(`Recipe: ${meal.strMeal}\n\nInstructions: ${meal.strInstructions?.substring(0, 200)}...`);

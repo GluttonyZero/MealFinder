@@ -1,6 +1,7 @@
+// components/Inventory.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { User } from "../types/user";
 import InventorySearch from "./InventorySearch";
 
@@ -16,14 +17,14 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchInventory();
-  }, [user]);
-
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     setLoading(true);
     setError("");
-    if (!API_BASE_URL) return setError("Backend URL not configured");
+    if (!API_BASE_URL) {
+      setError("Backend URL not configured");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.id}/inventory`);
@@ -37,10 +38,17 @@ export default function Inventory({ user, onInventoryChange }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
 
   const addIngredient = async (ingredient: string) => {
-    if (!API_BASE_URL) return setError("Backend URL not configured");
+    if (!API_BASE_URL) {
+      setError("Backend URL not configured");
+      return;
+    }
     setLoading(true);
     setError("");
 
@@ -65,7 +73,10 @@ export default function Inventory({ user, onInventoryChange }: Props) {
   };
 
   const removeIngredient = async (ingredient: string) => {
-    if (!API_BASE_URL) return setError("Backend URL not configured");
+    if (!API_BASE_URL) {
+      setError("Backend URL not configured");
+      return;
+    }
     setLoading(true);
     setError("");
 
