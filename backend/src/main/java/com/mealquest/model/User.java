@@ -27,12 +27,14 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    // FIX: Match the actual column name in database
+    // FIX: Remove default value from column definition
     @Column(name = "inventory_json", columnDefinition = "TEXT")
-    private String inventoryJson = "[]";
+    private String inventoryJson;
 
-    // Constructors
-    public User() {}
+    // Constructors - set default value in code
+    public User() {
+        this.inventoryJson = "[]";
+    }
 
     public User(String username, String password, String email) {
         this.username = username;
@@ -41,7 +43,16 @@ public class User {
         this.inventoryJson = "[]";
     }
 
-    // Getters and Setters
+    // Getters and Setters with null handling
+    public String getInventoryJson() { 
+        return inventoryJson != null ? inventoryJson : "[]";
+    }
+    
+    public void setInventoryJson(String inventoryJson) { 
+        this.inventoryJson = inventoryJson != null ? inventoryJson : "[]";
+    }
+
+    // ... rest of your getters/setters remain the same
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -54,17 +65,15 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getInventoryJson() { return inventoryJson; }
-    public void setInventoryJson(String inventoryJson) { this.inventoryJson = inventoryJson; }
-
     // Helper methods to work with inventory as List
     public List<String> getInventory() {
         try {
-            if (inventoryJson == null || inventoryJson.trim().isEmpty()) {
+            String json = getInventoryJson();
+            if (json == null || json.trim().isEmpty() || json.equals("[]")) {
                 return new ArrayList<>();
             }
-            // Simple JSON parsing - in production use a proper JSON library
-            String cleanJson = inventoryJson.replace("[", "").replace("]", "").replace("\"", "");
+            // Simple JSON parsing
+            String cleanJson = json.replace("[", "").replace("]", "").replace("\"", "");
             if (cleanJson.trim().isEmpty()) {
                 return new ArrayList<>();
             }

@@ -18,17 +18,55 @@ public class DatabaseFixController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Drop tables if they exist
+            // Drop tables if they exist (in correct order due to foreign keys)
+            jdbcTemplate.execute("DROP TABLE IF EXISTS recipe_ingredients");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS recipes");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS ingredients");
             jdbcTemplate.execute("DROP TABLE IF EXISTS users");
             
-            // Create users table with proper structure
+            // Create users table with proper MySQL syntax
             jdbcTemplate.execute(
                 "CREATE TABLE users (" +
                 "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
                 "username VARCHAR(255) NOT NULL UNIQUE, " +
                 "password VARCHAR(255) NOT NULL, " +
                 "email VARCHAR(255) NOT NULL UNIQUE, " +
-                "inventory_json TEXT DEFAULT '[]'" +
+                "inventory_json TEXT" +  // Removed DEFAULT '[]' for TEXT column
+                ")"
+            );
+            
+            // Create ingredients table
+            jdbcTemplate.execute(
+                "CREATE TABLE ingredients (" +
+                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "cost DOUBLE, " +
+                "category VARCHAR(255)" +
+                ")"
+            );
+            
+            // Create recipes table
+            jdbcTemplate.execute(
+                "CREATE TABLE recipes (" +
+                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "description TEXT, " +
+                "instructions TEXT, " +
+                "category VARCHAR(255), " +
+                "prep_time INT, " +
+                "cook_time INT, " +
+                "difficulty VARCHAR(255)" +
+                ")"
+            );
+            
+            // Create recipe_ingredients join table
+            jdbcTemplate.execute(
+                "CREATE TABLE recipe_ingredients (" +
+                "recipe_id BIGINT, " +
+                "ingredient_id BIGINT, " +
+                "PRIMARY KEY (recipe_id, ingredient_id), " +
+                "FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, " +
+                "FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE" +
                 ")"
             );
             

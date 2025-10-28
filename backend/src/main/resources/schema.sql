@@ -1,10 +1,10 @@
--- src/main/resources/schema.sql
+-- Remove DEFAULT '[]' from TEXT columns
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    inventory_json TEXT DEFAULT '[]'
+    inventory_json TEXT
 );
 
 CREATE TABLE IF NOT EXISTS ingredients (
@@ -29,6 +29,6 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
     recipe_id BIGINT,
     ingredient_id BIGINT,
     PRIMARY KEY (recipe_id, ingredient_id),
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id),
-    FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+    FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
 );
