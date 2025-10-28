@@ -27,8 +27,8 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    // SIMPLIFIED: Store inventory as JSON string to avoid join table issues
-    @Column(columnDefinition = "TEXT")
+    // FIX: Match the actual column name in database
+    @Column(name = "inventory_json", columnDefinition = "TEXT")
     private String inventoryJson = "[]";
 
     // Constructors
