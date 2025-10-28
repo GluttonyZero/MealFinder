@@ -10,90 +10,136 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.util.List;
+
 @Component
 public class DataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JdbcTemplate jdbcTemplate;
+    private final IngredientRepository ingredientRepository;
+    private final RecipeRepository recipeRepository;
 
-    public DataLoader(UserRepository userRepository, PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate) {
+    public DataLoader(UserRepository userRepository, PasswordEncoder passwordEncoder, 
+                     IngredientRepository ingredientRepository, RecipeRepository recipeRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jdbcTemplate = jdbcTemplate;
+        this.ingredientRepository = ingredientRepository;
+        this.recipeRepository = recipeRepository;
     }
 
     @Override
     public void run(String... args) {
-        System.out.println("🚀 Starting database initialization...");
-        
-        // First, ensure tables exist
-        ensureTablesExist();
-        
-        // Then create sample data
+        loadUsers();
+        loadIngredients();
+        loadRecipes();
+    }
+
+    private void loadUsers() {
         if (userRepository.count() == 0) {
-            createSampleUsers();
-        } else {
-            System.out.println("✅ Database already has " + userRepository.count() + " users");
+            User u1 = new User();
+            u1.setUsername("alice");
+            u1.setPassword(passwordEncoder.encode("password123"));
+            u1.setEmail("alice@example.com");
+
+            User u2 = new User();
+            u2.setUsername("bob");
+            u2.setPassword(passwordEncoder.encode("password123"));
+            u2.setEmail("bob@example.com");
+
+            User u3 = new User();
+            u3.setUsername("charlie");
+            u3.setPassword(passwordEncoder.encode("password123"));
+            u3.setEmail("charlie@example.com");
+
+            userRepository.save(u1);
+            userRepository.save(u2);
+            userRepository.save(u3);
+
+            System.out.println("✅ Sample users added!");
         }
     }
 
-    private void ensureTablesExist() {
-        try {
-            // Try to query users table to see if it exists
-            userRepository.count();
-            System.out.println("✅ Database tables are ready");
-        } catch (Exception e) {
-            System.out.println("❌ Tables don't exist, creating them...");
-            createTablesManually();
-        }
-    }
-
-    private void createTablesManually() {
-        try {
-            jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS users (" +
-                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
-                "username VARCHAR(255) NOT NULL UNIQUE, " +
-                "password VARCHAR(255) NOT NULL, " +
-                "email VARCHAR(255) NOT NULL UNIQUE" +
-                ")"
+    private void loadIngredients() {
+        if (ingredientRepository.count() == 0) {
+            List<Ingredient> ingredients = List.of(
+                new Ingredient("Chicken Breast", 5.99, "Meat"),
+                new Ingredient("Rice", 2.49, "Grains"),
+                new Ingredient("Tomato", 1.99, "Vegetables"),
+                new Ingredient("Onion", 0.99, "Vegetables"),
+                new Ingredient("Garlic", 0.79, "Vegetables"),
+                new Ingredient("Olive Oil", 8.99, "Oils"),
+                new Ingredient("Salt", 1.49, "Spices"),
+                new Ingredient("Black Pepper", 2.99, "Spices"),
+                new Ingredient("Pasta", 1.99, "Grains"),
+                new Ingredient("Cheese", 4.99, "Dairy"),
+                new Ingredient("Eggs", 3.49, "Dairy"),
+                new Ingredient("Flour", 2.99, "Grains"),
+                new Ingredient("Butter", 4.49, "Dairy"),
+                new Ingredient("Milk", 3.99, "Dairy"),
+                new Ingredient("Potato", 1.49, "Vegetables")
             );
-            
-            jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS user_inventory (" +
-                "user_id BIGINT NOT NULL, " +
-                "ingredient VARCHAR(255), " +
-                "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE" +
-                ")"
-            );
-            
-            System.out.println("✅ Tables created manually");
-        } catch (Exception e) {
-            System.err.println("❌ Failed to create tables: " + e.getMessage());
+            ingredientRepository.saveAll(ingredients);
+            System.out.println("✅ Sample ingredients added!");
         }
     }
 
-    private void createSampleUsers() {
-        try {
-            User user1 = new User();
-            user1.setUsername("alice");
-            user1.setPassword(passwordEncoder.encode("password123"));
-            user1.setEmail("alice@example.com");
-            user1.setInventory(java.util.Arrays.asList("Chicken", "Rice", "Tomato"));
-
-            User user2 = new User();
-            user2.setUsername("bob");
-            user2.setPassword(passwordEncoder.encode("password123"));
-            user2.setEmail("bob@example.com");
-            user2.setInventory(java.util.Arrays.asList("Pasta", "Cheese", "Garlic"));
-
-            userRepository.save(user1);
-            userRepository.save(user2);
+    private void loadRecipes() {
+        if (recipeRepository.count() == 0) {
+            List<Ingredient> allIngredients = ingredientRepository.findAll();
             
-            System.out.println("✅ Created 2 sample users with inventories");
+            // Recipe 1: Chicken and Rice
+            Recipe chickenRice = new Recipe("Chicken and Rice", 
+                "Simple and delicious chicken with rice", 
+                "1. Cook chicken until golden brown\n2. Cook rice separately\n3. Combine and season with salt and pepper", 
+                "Main Course");
+            chickenRice.setPrepTime(10);
+            chickenRice.setCookTime(25);
+            chickenRice.setDifficulty("Easy");
+            chickenRice.addIngredient(findIngredient(allIngredients, "Chicken Breast"));
+            chickenRice.addIngredient(findIngredient(allIngredients, "Rice"));
+            chickenRice.addIngredient(findIngredient(allIngredients, "Salt"));
+            chickenRice.addIngredient(findIngredient(allIngredients, "Black Pepper"));
+            chickenRice.addIngredient(findIngredient(allIngredients, "Olive Oil"));
             
-        } catch (Exception e) {
-            System.err.println("❌ Error creating sample users: " + e.getMessage());
+            // Recipe 2: Tomato Pasta
+            Recipe pastaDish = new Recipe("Tomato Pasta", 
+                "Classic Italian pasta with tomato sauce", 
+                "1. Cook pasta according to package instructions\n2. Sauté garlic and onion in olive oil\n3. Add tomatoes and simmer\n4. Combine with pasta", 
+                "Main Course");
+            pastaDish.setPrepTime(15);
+            pastaDish.setCookTime(20);
+            pastaDish.setDifficulty("Easy");
+            pastaDish.addIngredient(findIngredient(allIngredients, "Pasta"));
+            pastaDish.addIngredient(findIngredient(allIngredients, "Tomato"));
+            pastaDish.addIngredient(findIngredient(allIngredients, "Garlic"));
+            pastaDish.addIngredient(findIngredient(allIngredients, "Onion"));
+            pastaDish.addIngredient(findIngredient(allIngredients, "Olive Oil"));
+            pastaDish.addIngredient(findIngredient(allIngredients, "Salt"));
+            
+            // Recipe 3: Scrambled Eggs
+            Recipe scrambledEggs = new Recipe("Scrambled Eggs", 
+                "Fluffy and delicious scrambled eggs", 
+                "1. Beat eggs with salt and pepper\n2. Melt butter in pan\n3. Cook eggs on low heat until fluffy", 
+                "Breakfast");
+            scrambledEggs.setPrepTime(5);
+            scrambledEggs.setCookTime(10);
+            scrambledEggs.setDifficulty("Very Easy");
+            scrambledEggs.addIngredient(findIngredient(allIngredients, "Eggs"));
+            scrambledEggs.addIngredient(findIngredient(allIngredients, "Butter"));
+            scrambledEggs.addIngredient(findIngredient(allIngredients, "Salt"));
+            scrambledEggs.addIngredient(findIngredient(allIngredients, "Black Pepper"));
+            
+            recipeRepository.save(chickenRice);
+            recipeRepository.save(pastaDish);
+            recipeRepository.save(scrambledEggs);
+            
+            System.out.println("✅ Sample recipes added!");
         }
+    }
+
+    private Ingredient findIngredient(List<Ingredient> ingredients, String name) {
+        return ingredients.stream()
+                .filter(ing -> ing.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 }
