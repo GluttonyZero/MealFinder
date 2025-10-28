@@ -1,3 +1,4 @@
+// UserController.java
 package com.mealquest.controller;
 
 import com.mealquest.model.User;
@@ -9,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder")
+@CrossOrigin(origins = {"http://localhost:3000", "https://gluttonyzero.github.io"})
 public class UserController {
 
     @Autowired
@@ -44,8 +45,4 @@ public class UserController {
         }
         return ResponseEntity.notFound().build();
     }
-
-    // REMOVED inventory endpoints to avoid ambiguity
-    // - Removed: addIngredient, removeIngredient, getInventory
-    // These are now handled by InventoryController
 }
