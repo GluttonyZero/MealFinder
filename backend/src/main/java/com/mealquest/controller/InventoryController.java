@@ -25,7 +25,7 @@ public class InventoryController {
                 .map(user -> {
                     List<String> inventory = user.getInventory();
                     System.out.println("Found inventory: " + inventory);
-                    return ResponseEntity.ok(new ArrayList<>(inventory));
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(inventory));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -47,7 +47,7 @@ public class InventoryController {
                     
                     List<String> updatedInventory = user.getInventory();
                     System.out.println("Added ingredient: " + cleanIngredient + ", new inventory: " + updatedInventory);
-                    return ResponseEntity.ok(new ArrayList<>(updatedInventory));
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(updatedInventory));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -69,7 +69,7 @@ public class InventoryController {
                     
                     List<String> updatedInventory = user.getInventory();
                     System.out.println("Removed ingredient: " + cleanIngredient + ", new inventory: " + updatedInventory);
-                    return ResponseEntity.ok(new ArrayList<>(updatedInventory));
+                    return ResponseEntity.<List<String>>ok(new ArrayList<>(updatedInventory));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
