@@ -25,9 +25,6 @@ public class User {
     @NotBlank
     private String email;
 
-    // CORRECT: @ElementCollection mapping for simple list of strings
-    // This creates a join table with ONLY user_id and ingredient columns
-    // NO inventory_id column will be created
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_inventory", 
@@ -36,7 +33,6 @@ public class User {
     @Column(name = "ingredient")
     private List<String> inventory = new ArrayList<>();
 
-    // Constructors
     public User() {}
 
     public User(String username, String password, String email) {
@@ -45,48 +41,21 @@ public class User {
         this.email = email;
     }
 
-    // Getters and Setters
-    public Long getId() { 
-        return id; 
-    }
-    
-    public void setId(Long id) { 
-        this.id = id; 
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public String getUsername() { 
-        return username; 
-    }
-    
-    public void setUsername(String username) { 
-        this.username = username; 
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getPassword() { 
-        return password; 
-    }
-    
-    public void setPassword(String password) { 
-        this.password = password; 
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public String getEmail() { 
-        return email; 
-    }
-    
-    public void setEmail(String email) { 
-        this.email = email; 
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public List<String> getInventory() { 
-        return inventory; 
-    }
-    
-    public void setInventory(List<String> inventory) { 
-        this.inventory = inventory; 
-    }
+    public List<String> getInventory() { return inventory; }
+    public void setInventory(List<String> inventory) { this.inventory = inventory; }
 
-    // Helper methods
     public void addToInventory(String ingredient) {
         if (!inventory.contains(ingredient)) {
             inventory.add(ingredient);
@@ -119,7 +88,6 @@ public class User {
                 '}';
     }
 
-    // Additional utility methods
     public static User createUser(String username, String email, String password) {
         User user = new User();
         user.setUsername(username);
