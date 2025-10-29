@@ -13,73 +13,59 @@ public class DatabaseFixController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @GetMapping("/api/fix-database")
-    public Map<String, Object> fixDatabase() {
-        Map<String, Object> response = new HashMap<>();
+
+@GetMapping("/api/fix-database")
+public Map<String, Object> fixDatabase() {
+    Map<String, Object> response = new HashMap<>();
+    
+    try {
+        // Drop the old relational tables
+        jdbcTemplate.execute("DROP TABLE IF EXISTS recipe_ingredients");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS recipes");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS ingredients");
         
-        try {
-            // Drop tables if they exist (in correct order due to foreign keys)
-            jdbcTemplate.execute("DROP TABLE IF EXISTS recipe_ingredients");
-            jdbcTemplate.execute("DROP TABLE IF EXISTS recipes");
-            jdbcTemplate.execute("DROP TABLE IF EXISTS ingredients");
-            jdbcTemplate.execute("DROP TABLE IF EXISTS users");
-            
-            // Create users table with proper MySQL syntax
-            jdbcTemplate.execute(
-                "CREATE TABLE users (" +
-                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
-                "username VARCHAR(255) NOT NULL UNIQUE, " +
-                "password VARCHAR(255) NOT NULL, " +
-                "email VARCHAR(255) NOT NULL UNIQUE, " +
-                "inventory_json TEXT" +  // Removed DEFAULT '[]' for TEXT column
-                ")"
-            );
-            
-            // Create ingredients table
-            jdbcTemplate.execute(
-                "CREATE TABLE ingredients (" +
-                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
-                "name VARCHAR(255), " +
-                "cost DOUBLE, " +
-                "category VARCHAR(255)" +
-                ")"
-            );
-            
-            // Create recipes table
-            jdbcTemplate.execute(
-                "CREATE TABLE recipes (" +
-                "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
-                "name VARCHAR(255), " +
-                "description TEXT, " +
-                "instructions TEXT, " +
-                "category VARCHAR(255), " +
-                "prep_time INT, " +
-                "cook_time INT, " +
-                "difficulty VARCHAR(255)" +
-                ")"
-            );
-            
-            // Create recipe_ingredients join table
-            jdbcTemplate.execute(
-                "CREATE TABLE recipe_ingredients (" +
-                "recipe_id BIGINT, " +
-                "ingredient_id BIGINT, " +
-                "PRIMARY KEY (recipe_id, ingredient_id), " +
-                "FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, " +
-                "FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE" +
-                ")"
-            );
-            
-            response.put("status", "success");
-            response.put("message", "Database tables created successfully");
-            
-        } catch (Exception e) {
-            response.put("status", "error");
-            response.put("message", e.getMessage());
-        }
+        // Keep users table
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS users (" +
+            "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+            "username VARCHAR(255) NOT NULL UNIQUE, " +
+            "password VARCHAR(255) NOT NULL, " +
+            "email VARCHAR(255) NOT NULL UNIQUE, " +
+            "inventory_json TEXT" +
+            ")");
         
-        return response;
+        // Create the flat recipes table (your preferred schema)
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS recipes (" +
+            "id INT AUTO_INCREMENT PRIMARY KEY, " +
+            "recipe_name VARCHAR(500), " +
+            "prep_time VARCHAR(500), " +
+            "cook_time VARCHAR(500), " +
+            "total_time VARCHAR(500), " +
+            "servings VARCHAR(500), " +
+            "`yield` VARCHAR(500), " +
+            "ingredients TEXT, " +
+            "directions TEXT, " +
+            "rating FLOAT, " +
+            "url VARCHAR(500), " +
+            "cuisine_path VARCHAR(500), " +
+            "nutrition TEXT, " +
+            "timing VARCHAR(500), " +
+            "img_src VARCHAR(500)" +
+            ")");
+        
+        response.put("status", "success");
+        response.put("message", "Database tables created with flat structure");
+        
+    } catch (Exception e) {
+        response.put("status", "error");
+        response.put("message", e.getMessage());
     }
+    
+    return response;
+}
+
+
+
+
 
     @GetMapping("/api/check-database")
     public Map<String, Object> checkDatabase() {

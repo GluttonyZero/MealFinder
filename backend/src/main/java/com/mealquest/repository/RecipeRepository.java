@@ -10,14 +10,20 @@ import java.util.List;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     
-    @Query("SELECT DISTINCT r FROM Recipe r JOIN r.ingredients i WHERE i.name IN :ingredientNames")
-    List<Recipe> findRecipesByIngredientNames(@Param("ingredientNames") List<String> ingredientNames);
-    
-    @Query("SELECT r FROM Recipe r WHERE " +
-           "(SELECT COUNT(DISTINCT i) FROM r.ingredients i WHERE i.name IN :ingredientNames) = :ingredientCount")
-    List<Recipe> findRecipesByAllIngredients(@Param("ingredientNames") List<String> ingredientNames, 
-                                           @Param("ingredientCount") Long ingredientCount);
-    
-    List<Recipe> findByCategory(String category);
+    // Search by recipe name
     List<Recipe> findByNameContainingIgnoreCase(String name);
+    
+    // Search by cuisine path (category)
+    List<Recipe> findByCuisinePathContainingIgnoreCase(String cuisinePath);
+    
+    // Custom query to search in ingredients text
+    @Query("SELECT r FROM Recipe r WHERE LOWER(r.ingredients) LIKE LOWER(CONCAT('%', :ingredient, '%'))")
+    List<Recipe> findByIngredientContaining(@Param("ingredient") String ingredient);
+    
+    // Search in multiple fields
+    @Query("SELECT r FROM Recipe r WHERE " +
+           "LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(r.ingredients) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(r.cuisinePath) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<Recipe> searchInAllFields(@Param("query") String query);
 }
