@@ -12,16 +12,18 @@ public class Recipe {
     private Long id;
 
     @Column(name = "recipe_name")
-    private String name;
-    
+    private String recipeName;
+
     private String prepTime;
     private String cookTime;
     private String totalTime;
     private String servings;
+    
+    @Column(name = "yield")
     private String yield;
     
     @Column(columnDefinition = "TEXT")
-    private String ingredients;  // Store as text like your database
+    private String ingredients;
     
     @Column(columnDefinition = "TEXT")
     private String directions;
@@ -39,19 +41,23 @@ public class Recipe {
     // Constructors
     public Recipe() {}
 
-    public Recipe(String name, String ingredients, String directions, String category) {
-        this.name = name;
+    public Recipe(String recipeName, String ingredients, String directions, String cuisinePath) {
+        this.recipeName = recipeName;
         this.ingredients = ingredients;
         this.directions = directions;
-        this.cuisinePath = category;
+        this.cuisinePath = cuisinePath;
     }
 
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getRecipeName() { return recipeName; }
+    public void setRecipeName(String recipeName) { this.recipeName = recipeName; }
+
+    // Alias for getName() to work with existing code
+    public String getName() { return recipeName; }
+    public void setName(String name) { this.recipeName = name; }
 
     public String getPrepTime() { return prepTime; }
     public void setPrepTime(String prepTime) { this.prepTime = prepTime; }
@@ -92,7 +98,7 @@ public class Recipe {
     public String getImgSrc() { return imgSrc; }
     public void setImgSrc(String imgSrc) { this.imgSrc = imgSrc; }
 
-    // Helper method to check if recipe contains an ingredient
+    // Helper methods for ingredient matching
     public boolean containsIngredient(String ingredientName) {
         if (ingredients == null || ingredientName == null) return false;
         
@@ -109,20 +115,18 @@ public class Recipe {
         return false;
     }
 
-    // Count how many user ingredients match this recipe
     public int countMatchingIngredients(List<String> userIngredients) {
         if (userIngredients == null || ingredients == null) return 0;
         
-        int matches = 0;
+        int count = 0;
         for (String userIng : userIngredients) {
             if (containsIngredient(userIng)) {
-                matches++;
+                count++;
             }
         }
-        return matches;
+        return count;
     }
 
-    // Get list of individual ingredients
     public List<String> getIngredientList() {
         List<String> result = new ArrayList<>();
         if (ingredients != null) {

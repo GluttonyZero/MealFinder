@@ -15,99 +15,127 @@ public class RecipeService {
     }
 
     public Map<String, Object> getRecipeSuggestionsWithScoring(Long userId, List<String> userInventory) {
-        System.out.println("Searching recipes for user: " + userId + " with inventory: " + userInventory);
+        System.out.println("=== MEAL CHALLENGES DEBUG START ===");
+        System.out.println("User ID: " + userId);
+        System.out.println("User Inventory: " + userInventory);
+        
+        Map<String, Object> result = new HashMap<>();
         
         if (userInventory == null || userInventory.isEmpty()) {
-            Map<String, Object> result = new HashMap<>();
+            System.out.println("❌ User inventory is empty");
             result.put("status", "info");
             result.put("message", "Inventory is empty");
             result.put("recipes", Collections.emptyList());
+            result.put("userInventorySize", 0);
+            result.put("totalRecipesFound", 0);
             return result;
         }
 
-        // Get ALL recipes first
+        // Get ALL recipes
         List<Recipe> allRecipes = getAllRecipes();
-        System.out.println("Total recipes in database: " + allRecipes.size());
+        System.out.println("📊 Total recipes in database: " + allRecipes.size());
         
-        // Filter recipes that match user ingredients
-        List<Recipe> matchingRecipes = allRecipes.stream()
-                .filter(recipe -> hasMatchingIngredients(recipe, userInventory))
-                .collect(Collectors.toList());
+        if (allRecipes.isEmpty()) {
+            System.out.println("❌ No recipes found in database");
+            result.put("status", "info");
+            result.put("message", "No recipes available");
+            result.put("recipes", Collections.emptyList());
+            result.put("userInventorySize", userInventory.size());
+            result.put("totalRecipesFound", 0);
+            return result;
+        }
+
+        // Debug: Show first few recipes and their ingredients
+        System.out.println("📝 Sample recipes from database:");
+        for (int i = 0; i < Math.min(3, allRecipes.size()); i++) {
+            Recipe recipe = allRecipes.get(i);
+            System.out.println("  Recipe " + i + ": " + recipe.getRecipeName());
+            System.out.println("  Ingredients: " + (recipe.getIngredients() != null ? 
+                recipe.getIngredients().substring(0, Math.min(100, recipe.getIngredients().length())) : "NULL"));
+        }
+
+        // Find matching recipes using simple text matching
+        List<Map<String, Object>> matchingRecipes = new ArrayList<>();
         
-        System.out.println("Found " + matchingRecipes.size() + " matching recipes");
-        
-        // Score and sort recipes by number of matching ingredients
-        List<Map<String, Object>> scoredRecipes = matchingRecipes.stream()
-                .map(recipe -> {
-                    int matchingCount = recipe.countMatchingIngredients(userInventory);
-                    List<String> allRecipeIngredients = recipe.getIngredientList();
-                    double matchPercentage = (double) matchingCount / allRecipeIngredients.size() * 100;
-                    
-                    // Find which ingredients are missing
-                    List<String> missingIngredients = getMissingIngredients(recipe, userInventory);
-                    
-                    Map<String, Object> scoredRecipe = new HashMap<>();
-                    scoredRecipe.put("recipe", recipe);
-                    scoredRecipe.put("matchingIngredients", matchingCount);
-                    scoredRecipe.put("totalIngredients", allRecipeIngredients.size());
-                    scoredRecipe.put("matchPercentage", Math.round(matchPercentage));
-                    scoredRecipe.put("missingIngredients", missingIngredients);
-                    scoredRecipe.put("missingCount", missingIngredients.size());
-                    
-                    return scoredRecipe;
-                })
-                .sorted((r1, r2) -> {
-                    // Sort by match percentage (highest first), then by missing ingredients (lowest first)
-                    double p1 = (double) r1.get("matchPercentage");
-                    double p2 = (double) r2.get("matchPercentage");
-                    int missing1 = (int) r1.get("missingCount");
-                    int missing2 = (int) r2.get("missingCount");
-                    
-                    if (p1 != p2) {
-                        return Double.compare(p2, p1);
+        for (Recipe recipe : allRecipes) {
+            if (recipe.getIngredients() == null) {
+                continue;
+            }
+            
+            String recipeIngredients = recipe.getIngredients().toLowerCase();
+            int matchCount = 0;
+            List<String> matchedItems = new ArrayList<>();
+            List<String> missingItems = new ArrayList<>();
+            
+            // Check each user ingredient against recipe ingredients
+            for (String userIngredient : userInventory) {
+                String cleanUserIngredient = userIngredient.toLowerCase().trim();
+                if (recipeIngredients.contains(cleanUserIngredient)) {
+                    matchCount++;
+                    matchedItems.add(userIngredient);
+                    System.out.println("✅ MATCH: Recipe '" + recipe.getRecipeName() + 
+                                     "' contains '" + userIngredient + "'");
+                }
+            }
+            
+            if (matchCount > 0) {
+                // Calculate match percentage
+                List<String> allRecipeIngredients = recipe.getIngredientList();
+                double matchPercentage = allRecipeIngredients.isEmpty() ? 0 : 
+                    (double) matchCount / allRecipeIngredients.size() * 100;
+                
+                // Find missing ingredients
+                for (String recipeIng : allRecipeIngredients) {
+                    boolean found = false;
+                    for (String userIng : userInventory) {
+                        if (recipeIng.toLowerCase().contains(userIng.toLowerCase())) {
+                            found = true;
+                            break;
+                        }
                     }
-                    return Integer.compare(missing1, missing2);
-                })
-                .collect(Collectors.toList());
-        
-        Map<String, Object> result = new HashMap<>();
+                    if (!found) {
+                        missingItems.add(recipeIng);
+                    }
+                }
+                
+                Map<String, Object> recipeResult = new HashMap<>();
+                recipeResult.put("recipe", recipe);
+                recipeResult.put("matchingIngredients", matchCount);
+                recipeResult.put("totalIngredients", allRecipeIngredients.size());
+                recipeResult.put("matchPercentage", Math.round(matchPercentage));
+                recipeResult.put("matchedItems", matchedItems);
+                recipeResult.put("missingIngredients", missingItems);
+                recipeResult.put("missingCount", missingItems.size());
+                
+                matchingRecipes.add(recipeResult);
+                System.out.println("🎯 ADDED: " + recipe.getRecipeName() + " - " + matchCount + " matches");
+            }
+        }
+
+        // Sort by match percentage (highest first), then by missing ingredients (lowest first)
+        matchingRecipes.sort((r1, r2) -> {
+            double p1 = (double) r1.get("matchPercentage");
+            double p2 = (double) r2.get("matchPercentage");
+            int missing1 = (int) r1.get("missingCount");
+            int missing2 = (int) r2.get("missingCount");
+            
+            if (p1 != p2) {
+                return Double.compare(p2, p1);
+            }
+            return Integer.compare(missing1, missing2);
+        });
+
         result.put("status", "success");
-        result.put("totalRecipesFound", scoredRecipes.size());
+        result.put("totalRecipesFound", matchingRecipes.size());
         result.put("userInventorySize", userInventory.size());
-        result.put("recipes", scoredRecipes);
+        result.put("recipes", matchingRecipes);
+        
+        System.out.println("✅ FINAL: Found " + matchingRecipes.size() + " matching recipes");
+        System.out.println("=== MEAL CHALLENGES DEBUG END ===");
         
         return result;
     }
 
-    private boolean hasMatchingIngredients(Recipe recipe, List<String> userIngredients) {
-        for (String userIng : userIngredients) {
-            if (recipe.containsIngredient(userIng)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private List<String> getMissingIngredients(Recipe recipe, List<String> userIngredients) {
-        List<String> missing = new ArrayList<>();
-        List<String> recipeIngredients = recipe.getIngredientList();
-        
-        for (String recipeIng : recipeIngredients) {
-            boolean found = false;
-            for (String userIng : userIngredients) {
-                if (recipeIng.toLowerCase().contains(userIng.toLowerCase())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                missing.add(recipeIng);
-            }
-        }
-        return missing;
-    }
-
-    // Update other methods to work with new schema
     public List<Recipe> findRecipesByUserInventory(Long userId, List<String> userInventory) {
         if (userInventory == null || userInventory.isEmpty()) {
             return Collections.emptyList();
@@ -124,8 +152,20 @@ public class RecipeService {
                 .collect(Collectors.toList());
     }
 
+    private boolean hasMatchingIngredients(Recipe recipe, List<String> userIngredients) {
+        if (recipe.getIngredients() == null) return false;
+        
+        String recipeIngredients = recipe.getIngredients().toLowerCase();
+        for (String userIng : userIngredients) {
+            if (recipeIngredients.contains(userIng.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<Recipe> searchRecipes(String query) {
-        return recipeRepository.findByNameContainingIgnoreCase(query);
+        return recipeRepository.findByRecipeNameContainingIgnoreCase(query);
     }
 
     public List<Recipe> getRecipesByCategory(String category) {

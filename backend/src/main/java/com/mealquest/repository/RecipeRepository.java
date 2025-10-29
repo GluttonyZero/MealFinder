@@ -11,7 +11,7 @@ import java.util.List;
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     
     // Search by recipe name
-    List<Recipe> findByNameContainingIgnoreCase(String name);
+    List<Recipe> findByRecipeNameContainingIgnoreCase(String name);
     
     // Search by cuisine path (category)
     List<Recipe> findByCuisinePathContainingIgnoreCase(String cuisinePath);
@@ -22,7 +22,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     
     // Search in multiple fields
     @Query("SELECT r FROM Recipe r WHERE " +
-           "LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(r.recipeName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(r.ingredients) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(r.cuisinePath) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Recipe> searchInAllFields(@Param("query") String query);

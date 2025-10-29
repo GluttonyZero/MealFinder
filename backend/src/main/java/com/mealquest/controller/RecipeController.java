@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/recipes")
-@CrossOrigin(origins = "https://gluttonyzero.github.io/MealFinder", allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:3000", "https://gluttonyzero.github.io", "https://mealfinder-0tmr.onrender.com"})
 public class RecipeController {
 
     @Autowired
@@ -64,5 +64,78 @@ public class RecipeController {
     @GetMapping("/category/{category}")
     public List<Recipe> getRecipesByCategory(@PathVariable String category) {
         return recipeService.getRecipesByCategory(category);
+    }
+
+    // Debug endpoint to see what's in the database
+    @GetMapping("/debug")
+    public Map<String, Object> debugRecipes() {
+        Map<String, Object> debugInfo = new HashMap<>();
+        
+        try {
+            List<Recipe> allRecipes = recipeService.getAllRecipes();
+            debugInfo.put("totalRecipes", allRecipes.size());
+            
+            List<Map<String, Object>> recipeDetails = new ArrayList<>();
+            for (Recipe recipe : allRecipes) {
+                Map<String, Object> details = new HashMap<>();
+                details.put("id", recipe.getId());
+                details.put("name", recipe.getRecipeName());
+                details.put("ingredients", recipe.getIngredients());
+                details.put("ingredients_length", recipe.getIngredients() != null ? recipe.getIngredients().length() : 0);
+                details.put("ingredients_preview", recipe.getIngredients() != null ? 
+                    recipe.getIngredients().substring(0, Math.min(200, recipe.getIngredients().length())) + "..." : "null");
+                recipeDetails.add(details);
+            }
+            
+            debugInfo.put("recipes", recipeDetails);
+            debugInfo.put("status", "success");
+            
+        } catch (Exception e) {
+            debugInfo.put("status", "error");
+            debugInfo.put("error", e.getMessage());
+        }
+        
+        return debugInfo;
+    }
+
+    // Simple test endpoint
+    @GetMapping("/test-match")
+    public Map<String, Object> testMatching() {
+        Map<String, Object> result = new HashMap<>();
+        
+        // Test with hardcoded ingredients
+        List<String> testInventory = List.of("apple", "sugar", "butter");
+        List<Recipe> allRecipes = recipeService.getAllRecipes();
+        
+        result.put("testInventory", testInventory);
+        result.put("totalRecipes", allRecipes.size());
+        
+        List<Map<String, Object>> matches = new ArrayList<>();
+        for (Recipe recipe : allRecipes) {
+            int matchCount = 0;
+            List<String> matched = new ArrayList<>();
+            
+            if (recipe.getIngredients() != null) {
+                String ingredients = recipe.getIngredients().toLowerCase();
+                for (String ing : testInventory) {
+                    if (ingredients.contains(ing.toLowerCase())) {
+                        matchCount++;
+                        matched.add(ing);
+                    }
+                }
+            }
+            
+            if (matchCount > 0) {
+                Map<String, Object> match = new HashMap<>();
+                match.put("recipeName", recipe.getRecipeName());
+                match.put("matches", matchCount);
+                match.put("matchedIngredients", matched);
+                match.put("allIngredients", recipe.getIngredients());
+                matches.add(match);
+            }
+        }
+        
+        result.put("matchingRecipes", matches);
+        return result;
     }
 }
